@@ -1,3 +1,4 @@
+// ================== IMPORTAÇÕES ==================
 import fs from "fs";
 import express from "express";
 import session from "express-session";
@@ -6,9 +7,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import mysql from "mysql2/promise";
 
+// ================== CONFIGURAÇÃO BASE ==================
 const app = express();
 
-// ================== CONFIGURAÇÕES GERAIS ==================
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
@@ -17,13 +18,16 @@ app.use(session({
   saveUninitialized: true
 }));
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 
 // ================== CONFIGURAÇÕES DE CAMINHO ==================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ================== CONEXÃO COM MYSQL (RAILWAY) ==================
+// ================== CONEXÃO COM MYSQL ==================
 async function connectToDatabase() {
   try {
     const pool = await mysql.createPool({
@@ -46,7 +50,7 @@ async function connectToDatabase() {
 
 const pooldb = await connectToDatabase();
 
-// ================== IMPORTAÇÃO DO BANCO ==================
+// ================== IMPORTAÇÃO AUTOMÁTICA DO BANCO ==================
 const dbPath = path.resolve(__dirname, "banco.sql");
 
 async function importarBanco() {
@@ -84,11 +88,23 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ================== ROTAS DO SISTEMA ==================
+// ================== FUNÇÃO DE AUTENTICAÇÃO ==================
+function autenticar(req, res, next) {
+  if (!req.session.usuario) {
+    return res.status(401).json({ erro: "Usuário não autenticado" });
+  }
+  next();
+}
 
-// 🔹 Registro de usuário
+// ================== ROTAS ==================
+
+/* 🔹 Registro de usuário */
 app.post("/api/registro", async (req, res) => {
   const { nome, email, senha } = req.body;
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: "Preencha todos os campos" });
+  }
+
   try {
     const [existe] = await pooldb.query("SELECT * FROM usuarios WHERE email = ?", [email]);
     if (existe.length > 0) {
@@ -102,9 +118,13 @@ app.post("/api/registro", async (req, res) => {
   }
 });
 
-// 🔹 Login de usuário
+/* 🔹 Login de usuário */
 app.post("/api/login", async (req, res) => {
   const { email, senha } = req.body;
+  if (!email || !senha) {
+    return res.status(400).json({ erro: "Email e senha obrigatórios" });
+  }
+
   try {
     const [rows] = await pooldb.query("SELECT * FROM usuarios WHERE email = ? AND senha = ?", [email, senha]);
     if (rows.length === 0) {
@@ -118,15 +138,52 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// 🔹 Verificar se o usuário está logado
-app.get("/api/usuario", (req, res) => {
-  if (!req.session.usuario) {
-    return res.status(401).json({ erro: "Usuário não autenticado" });
+/* 🔹 Primeira visita */
+app.post("/api/primeira-visita", autenticar, async (req, res) => {
+  const { metaMensal, rendaMensal } = req.body;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    await pooldb.query("UPDATE usuarios SET metaMensal = ?, rendaMensal = ? WHERE id = ?", [metaMensal, rendaMensal, idUsuario]);
+    res.json({ mensagem: "Informações da primeira visita salvas!" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
   }
+});
+
+/* 🔹 Despesas */
+app.post("/api/despesas", autenticar, async (req, res) => {
+  const { descricao, valor, categoria, data } = req.body;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    await pooldb.query(
+      "INSERT INTO despesas (id_usuario, descricao, valor, categoria, data) VALUES (?, ?, ?, ?, ?)",
+      [idUsuario, descricao, valor, categoria, data]
+    );
+    res.json({ mensagem: "Despesa adicionada com sucesso!" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+/* 🔹 Listar despesas */
+app.get("/api/despesas", autenticar, async (req, res) => {
+  const idUsuario = req.session.usuario.id;
+  try {
+    const [rows] = await pooldb.query("SELECT * FROM despesas WHERE id_usuario = ?", [idUsuario]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+/* 🔹 Verificar se o usuário está logado */
+app.get("/api/usuario", autenticar, (req, res) => {
   res.json(req.session.usuario);
 });
 
-// 🔹 Logout
+/* 🔹 Logout */
 app.post("/api/logout", (req, res) => {
   req.session.destroy(err => {
     if (err) return res.status(500).json({ erro: "Erro ao encerrar sessão" });
@@ -134,19 +191,9 @@ app.post("/api/logout", (req, res) => {
   });
 });
 
-// 🔹 Lista de usuários (exemplo)
-app.get("/api/usuarios", async (req, res) => {
-  try {
-    const [rows] = await pooldb.query("SELECT id, nome, email FROM usuarios");
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
 // ================== INICIAR SERVIDOR ==================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  importarBanco(); // Importa o banco depois que o servidor sobe
+  importarBanco();
 });
