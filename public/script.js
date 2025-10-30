@@ -46,6 +46,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+
+  
+// ================================
+  // 👤 Login de usuário
+  // ================================
+  const loginForm = document.querySelector("#form-login");
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("Email").value;
+      const senha = document.getElementById("Senha").value;
+
+      try {
+        const resposta = await fetch("/api/login", { // Garanta que está usando /api/login
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, senha }),
+        });
+
+        const data = await resposta.json();
+
+        if (!resposta.ok) {
+          alert(data.erro || "Erro ao fazer login.");
+          return;
+        }
+
+        alert("Login realizado com sucesso!");
+        window.location.href = "usuario.html"; // Redireciona para a página do usuário
+      } catch (err) {
+        console.error("Erro no login:", err);
+        alert("Falha ao conectar com o servidor.");
+      }
+    });
+  }
+
+
+
+
+
+
   // ================================
   // 👤 Sessão do usuário logado
   // ================================
