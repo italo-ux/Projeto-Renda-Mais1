@@ -10,16 +10,25 @@ import mysql from "mysql2/promise";
 // ================== CONFIGURAÇÃO BASE ==================
 const app = express();
 
-app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// trust proxy (importante para cookies secure quando atrás de load balancer / Railway)
+app.set('trust proxy', 1);
+
+// session (cookie segura em produção)
 app.use(session({
   secret: "segredo",
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
 }));
 
+// CORS dinâmico — permite requests do front hospedado no mesmo domínio ou de localhost em dev
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: true,
   credentials: true
 }));
 
@@ -69,7 +78,7 @@ async function importarBanco() {
         try {
           await pooldb.query(comando);
         } catch (error) {
-          if (!error.message.includes("already exists")) {
+          if (!String(error.message).toLowerCase().includes("already exists")) {
             console.error("⚠️ Erro SQL:", error.message);
           }
         }
@@ -83,14 +92,13 @@ async function importarBanco() {
 
 // ================== FRONTEND (pasta public) ==================
 app.use(express.static(path.join(__dirname, "public")));
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // ================== FUNÇÃO DE AUTENTICAÇÃO ==================
 function autenticar(req, res, next) {
-  if (!req.session.usuario) {
+  if (!req.session || !req.session.usuario) {
     return res.status(401).json({ erro: "Usuário não autenticado" });
   }
   next();
@@ -98,19 +106,12 @@ function autenticar(req, res, next) {
 
 // ================== ROTAS ==================
 
-/* 🔹 Registro de usuário */
 app.post("/api/registro", async (req, res) => {
   const { nome, email, senha } = req.body;
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ erro: "Preencha todos os campos" });
-  }
-
+  if (!nome || !email || !senha) return res.status(400).json({ erro: "Preencha todos os campos" });
   try {
     const [existe] = await pooldb.query("SELECT * FROM usuarios WHERE email = ?", [email]);
-    if (existe.length > 0) {
-      return res.status(400).json({ erro: "Email já cadastrado" });
-    }
-
+    if (existe.length > 0) return res.status(400).json({ erro: "Email já cadastrado" });
     await pooldb.query("INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)", [nome, email, senha]);
     res.status(201).json({ mensagem: "Usuário cadastrado com sucesso!" });
   } catch (err) {
@@ -118,19 +119,12 @@ app.post("/api/registro", async (req, res) => {
   }
 });
 
-/* 🔹 Login de usuário */
 app.post("/api/login", async (req, res) => {
   const { email, senha } = req.body;
-  if (!email || !senha) {
-    return res.status(400).json({ erro: "Email e senha obrigatórios" });
-  }
-
+  if (!email || !senha) return res.status(400).json({ erro: "Email e senha obrigatórios" });
   try {
     const [rows] = await pooldb.query("SELECT * FROM usuarios WHERE email = ? AND senha = ?", [email, senha]);
-    if (rows.length === 0) {
-      return res.status(401).json({ erro: "Credenciais inválidas" });
-    }
-
+    if (rows.length === 0) return res.status(401).json({ erro: "Credenciais inválidas" });
     req.session.usuario = rows[0];
     res.json({ mensagem: "Login realizado com sucesso", usuario: rows[0] });
   } catch (err) {
@@ -138,11 +132,9 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-/* 🔹 Primeira visita */
 app.post("/api/primeira-visita", autenticar, async (req, res) => {
   const { metaMensal, rendaMensal } = req.body;
   const idUsuario = req.session.usuario.id;
-
   try {
     await pooldb.query("UPDATE usuarios SET metaMensal = ?, rendaMensal = ? WHERE id = ?", [metaMensal, rendaMensal, idUsuario]);
     res.json({ mensagem: "Informações da primeira visita salvas!" });
@@ -151,11 +143,9 @@ app.post("/api/primeira-visita", autenticar, async (req, res) => {
   }
 });
 
-/* 🔹 Despesas */
 app.post("/api/despesas", autenticar, async (req, res) => {
   const { descricao, valor, categoria, data } = req.body;
   const idUsuario = req.session.usuario.id;
-
   try {
     await pooldb.query(
       "INSERT INTO despesas (id_usuario, descricao, valor, categoria, data) VALUES (?, ?, ?, ?, ?)",
@@ -167,7 +157,6 @@ app.post("/api/despesas", autenticar, async (req, res) => {
   }
 });
 
-/* 🔹 Listar despesas */
 app.get("/api/despesas", autenticar, async (req, res) => {
   const idUsuario = req.session.usuario.id;
   try {
@@ -178,12 +167,10 @@ app.get("/api/despesas", autenticar, async (req, res) => {
   }
 });
 
-/* 🔹 Verificar se o usuário está logado */
 app.get("/api/usuario", autenticar, (req, res) => {
   res.json(req.session.usuario);
 });
 
-/* 🔹 Logout */
 app.post("/api/logout", (req, res) => {
   req.session.destroy(err => {
     if (err) return res.status(500).json({ erro: "Erro ao encerrar sessão" });
@@ -192,8 +179,11 @@ app.post("/api/logout", (req, res) => {
 });
 
 // ================== INICIAR SERVIDOR ==================
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => {
+const PORT = process.env.PORT;
+if (!PORT) {
+  console.warn("⚠️ process.env.PORT não definida — em dev local exporte PORT=8080 antes de rodar");
+}
+app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   importarBanco();
 });
