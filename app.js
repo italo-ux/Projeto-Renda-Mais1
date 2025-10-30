@@ -132,6 +132,33 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+
+
+// ADICIONE ESTA NOVA ROTA AQUI
+app.get("/api/primeira-visita", autenticar, async (req, res) => {
+  const idUsuario = req.session.usuario.id;
+  try {
+    // 1. Busca o usuário no banco
+    const [rows] = await pooldb.query("SELECT metaMensal, rendaMensal FROM usuarios WHERE id = ?", [idUsuario]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+
+    const usuario = rows[0];
+
+    // 2. Verifica se a meta ou a renda estão nulas (indicando primeira visita)
+    if (usuario.metaMensal === null || usuario.rendaMensal === null) {
+      res.json({ primeiraVisita: true });
+    } else {
+      res.json({ primeiraVisita: false });
+    }
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+
 app.post("/api/primeira-visita", autenticar, async (req, res) => {
   const { metaMensal, rendaMensal } = req.body;
   const idUsuario = req.session.usuario.id;
@@ -142,6 +169,10 @@ app.post("/api/primeira-visita", autenticar, async (req, res) => {
     res.status(500).json({ erro: err.message });
   }
 });
+
+
+
+
 
 app.post("/api/despesas", autenticar, async (req, res) => {
   const { descricao, valor, categoria, data } = req.body;
