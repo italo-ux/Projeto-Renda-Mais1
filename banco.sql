@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS usuarios_db;
-CREATE DATABASE usuarios_db;
-USE usuarios_db;
+DROP DATABASE IF EXISTS railway;
+CREATE DATABASE railway;
+USE railway;
 
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
