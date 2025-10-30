@@ -1,13 +1,55 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // ================================
+  // 🗓️  Atualizar data e mês no topo (se existir)
+  // ================================
   const data = new Date();
-  document.getElementById('mes').innerHTML = data.toLocaleString('default', { month: 'long' });
-  document.getElementById('data').innerHTML = data.toLocaleDateString();
+  const mesEl = document.getElementById('mes');
+  const dataEl = document.getElementById('data');
+  if (mesEl) mesEl.innerHTML = data.toLocaleString('default', { month: 'long' });
+  if (dataEl) dataEl.innerHTML = data.toLocaleDateString();
 
   let userId;
   let nomeUsuario;
 
+  // ================================
+  // 🧾 Cadastro de usuário
+  // ================================
+  const form = document.querySelector("form");
+  if (form && form.id === "form-registro") {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const nome = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("password").value;
+
+      try {
+        const resposta = await fetch("/api/registro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome, email, senha }),
+        });
+
+        const data = await resposta.json();
+
+        if (!resposta.ok) {
+          alert(data.erro || "Erro ao cadastrar.");
+          return;
+        }
+
+        alert("Usuário cadastrado com sucesso!");
+        window.location.href = "login.html";
+      } catch (err) {
+        console.error("Erro:", err);
+        alert("Falha ao conectar com o servidor.");
+      }
+    });
+  }
+
+  // ================================
+  // 👤 Sessão do usuário logado
+  // ================================
   try {
-    // 🔹 Pegar usuário logado
     const sessaoResp = await fetch("/api/usuario", { credentials: "include" });
     const sessaoData = await sessaoResp.json();
 
@@ -18,9 +60,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     userId = sessaoData.id;
     nomeUsuario = sessaoData.nome;
-    document.getElementById('usuario-name').innerHTML = nomeUsuario;
 
-    // 🔹 Verificar primeira visita
+    const usuarioNameEl = document.getElementById('usuario-name');
+    if (usuarioNameEl) usuarioNameEl.innerHTML = nomeUsuario;
+
+    // ================================
+    // 👋 Primeira visita
+    // ================================
     const visitaResp = await fetch(`/api/primeira-visita`, { credentials: "include" });
     const visitaData = await visitaResp.json();
 
@@ -70,7 +116,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error("Erro ao carregar usuário ou verificar visita:", err);
   }
 
-  // 🔹 Controle botão "começar"
+  // ================================
+  // ▶️ Controle botão "começar"
+  // ================================
   const comecar = document.getElementById('comecar');
   const despesas = document.getElementById('formDespesa');
   const formulario = document.getElementById('formulario');
@@ -83,7 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 🔹 Adicionar despesa
+  // ================================
+  // 💸 Adicionar despesa
+  // ================================
   const btnAdicionar = document.getElementById("btnAdicionar");
   if (btnAdicionar) {
     btnAdicionar.addEventListener("click", async () => {
@@ -117,7 +167,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 🔹 Pegar despesas
+  // ================================
+  // 📋 Pegar despesas
+  // ================================
   async function pegarDespesas() {
     try {
       const response = await fetch("/api/despesas", {
@@ -160,8 +212,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         totalPendente += valorNum;
       });
 
-      document.getElementById("total-pendente").innerText =
-        totalPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const totalEl = document.getElementById("total-pendente");
+      if (totalEl)
+        totalEl.innerText = totalPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
     } catch (error) {
       console.error("Erro ao pegar despesas:", error);
@@ -170,7 +223,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await pegarDespesas();
 
-  // 🔹 Logout
+  // ================================
+  // 🚪 Logout
+  // ================================
   const sair = document.getElementById('sair');
   if (sair) {
     sair.addEventListener('click', async (e) => {
