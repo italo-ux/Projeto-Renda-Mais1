@@ -181,8 +181,10 @@ app.post("/api/logout", (req, res) => {
 // ================== INICIAR SERVIDOR ==================
 const PORT = process.env.PORT;
 if (!PORT) {
-  console.warn("⚠️ process.env.PORT não definida — em dev local exporte PORT=8080 antes de rodar");
+  console.error("❌ Nenhuma porta recebida via process.env.PORT (Railway exige isso).");
+  process.exit(1);
 }
+
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   importarBanco();
