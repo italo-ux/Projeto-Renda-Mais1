@@ -124,7 +124,7 @@ if (visitaData.primeiraVisita) {
         const rendaMensal = document.getElementById('rendaMensal')?.value;
 
         if (!metaMensal || !rendaMensal) {
-          alert('Preencha os campos corretamente.');
+          alert('Por favor, preencha todos os campos.');
           return;
         }
 
@@ -133,21 +133,25 @@ if (visitaData.primeiraVisita) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ metaMensal, rendaMensal }),
+            body: JSON.stringify({ 
+              metaMensal: parseFloat(metaMensal), 
+              rendaMensal: parseFloat(rendaMensal) 
+            }),
           });
 
-          const data = await resp.json();
-          firstModal.hide();
-          alert(data.mensagem || 'Informações salvas com sucesso!');
-          setTimeout(() => window.location.reload(), 800);
+          if (resp.ok) {
+            firstModal.hide();
+            document.getElementById('firstVisitModal').remove();
+          } else {
+            const data = await resp.json();
+            alert(data.erro || 'Erro ao salvar informações.');
+          }
         } catch (err) {
-          console.error('Erro ao salvar primeira visita:', err);
-          alert('Erro ao salvar. Tente novamente.');
+          console.error('Erro:', err);
+          alert('Erro ao conectar com o servidor.');
         }
-      }, { once: true });
+      });
     }
-  } else {
-    alert(`Bem-vindo pela primeira vez, ${nomeUsuario}!`);
   }
 }
     } catch (err) {

@@ -142,27 +142,36 @@ app.get("/api/primeira-visita", autenticar, async (req, res) => {
       "SELECT primeira_visita FROM usuarios WHERE id = ?",
       [idUsuario]
     );
-
-    if (rows.length === 0) return res.status(404).json({ erro: "Usuário não encontrado" });
-
-    const usuario = rows[0];
-    res.json({ primeiraVisita: usuario.primeira_visita });
+    
+    if (!rows.length) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+    
+    res.json({ primeiraVisita: Boolean(rows[0].primeira_visita) });
   } catch (err) {
-    res.status(500).json({ erro: err.message });
+    console.error(err);
+    res.status(500).json({ erro: "Erro interno do servidor" });
   }
 });
 
 app.post("/api/primeira-visita", autenticar, async (req, res) => {
   const { metaMensal, rendaMensal } = req.body;
   const idUsuario = req.session.usuario.id;
+
+  if (!metaMensal || !rendaMensal) {
+    return res.status(400).json({ erro: "Dados inválidos" });
+  }
+
   try {
     await pooldb.query(
       "UPDATE usuarios SET metaMensal = ?, rendaMensal = ?, primeira_visita = FALSE WHERE id = ?",
       [metaMensal, rendaMensal, idUsuario]
     );
-    res.json({ mensagem: "Informações da primeira visita salvas!" });
+    
+    res.json({ mensagem: "Informações salvas com sucesso" });
   } catch (err) {
-    res.status(500).json({ erro: err.message });
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao salvar informações" });
   }
 });
 
