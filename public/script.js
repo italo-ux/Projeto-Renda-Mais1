@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   // ================================
-  // 🗓️  Atualizar data e mês no topo (se existir)
+  // 🗓️ Atualizar data e mês no topo
   // ================================
   const data = new Date();
   const mesEl = document.getElementById('mes');
@@ -10,82 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let userId;
   let nomeUsuario;
-
-  // ================================
-  // 🧾 Cadastro de usuário
-  // ================================
-  const form = document.querySelector("form");
-  if (form && form.id === "form-registro") {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const nome = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const senha = document.getElementById("password").value;
-
-      try {
-        const resposta = await fetch("/api/registro", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nome, email, senha }),
-        });
-
-        const data = await resposta.json();
-
-        if (!resposta.ok) {
-          alert(data.erro || "Erro ao cadastrar.");
-          return;
-        }
-
-        alert("Usuário cadastrado com sucesso!");
-        window.location.href = "login.html";
-      } catch (err) {
-        console.error("Erro:", err);
-        alert("Falha ao conectar com o servidor.");
-      }
-    });
-  }
-
-
-  
-// ================================
-  // 👤 Login de usuário
-  // ================================
-  const loginForm = document.querySelector("#form-login");
-  if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const email = document.getElementById("Email").value;
-      const senha = document.getElementById("Senha").value;
-
-      try {
-        const resposta = await fetch("/api/login", { // Garanta que está usando /api/login
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, senha }),
-        });
-
-        const data = await resposta.json();
-
-        if (!resposta.ok) {
-          alert(data.erro || "Erro ao fazer login.");
-          return;
-        }
-
-        alert("Login realizado com sucesso!");
-        window.location.href = "usuario.html"; // Redireciona para a página do usuário
-      } catch (err) {
-        console.error("Erro no login:", err);
-        alert("Falha ao conectar com o servidor.");
-      }
-    });
-  }
-
-
-
-
-
 
   // ================================
   // 👤 Sessão do usuário logado
@@ -109,67 +33,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 👋 Primeira visita
     // ================================
     const visitaResp = await fetch(`/api/primeira-visita`, { credentials: "include" });
-const visitaData = await visitaResp.json();
+    const visitaData = await visitaResp.json();
 
-if (visitaData.primeiraVisita) {
-  const modalEl = document.getElementById('firstVisitModal');
-  if (modalEl && typeof bootstrap !== 'undefined') {
-    const firstModal = new bootstrap.Modal(modalEl);
-    firstModal.show();
+    if (visitaData.primeiraVisita) {
+      const modalEl = document.getElementById('firstVisitModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const firstModal = new bootstrap.Modal(modalEl);
+        firstModal.show();
 
-    const saveBtn = document.getElementById('firstVisitSave');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', async () => {
-        const metaMensal = document.getElementById('metaMensal')?.value;
-        const rendaMensal = document.getElementById('rendaMensal')?.value;
+        const saveBtn = document.getElementById('firstVisitSave');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', async () => {
+            const metaMensal = document.getElementById('metaMensal')?.value;
+            const rendaMensal = document.getElementById('rendaMensal')?.value;
 
-        if (!metaMensal || !rendaMensal) {
-          alert('Preencha os campos corretamente.');
-          return;
+            if (!metaMensal || !rendaMensal) {
+              alert('Preencha os campos corretamente.');
+              return;
+            }
+
+            try {
+              // 1️⃣ Salva meta mensal e renda
+              const resp = await fetch('/api/primeira-visita', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ metaMensal, rendaMensal }),
+              });
+              await resp.json();
+
+              // 2️⃣ Pega campos da primeira despesa do modal
+              const descricao = document.getElementById('tituloDespesa')?.value;
+              const valor = document.getElementById('firstValor')?.value;
+              const categoria = document.getElementById('firstDescricao')?.value || "Primeira Visita";
+              const dataVencimento = document.getElementById('firstDataVencimento')?.value;
+
+              // 3️⃣ Adiciona a despesa se os campos estiverem preenchidos
+              if (descricao && valor) {
+                await fetch('/api/despesas', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    descricao,
+                    valor,
+                    categoria,
+                    data: dataVencimento
+                  }),
+                });
+              }
+
+              // 4️⃣ Fecha modal e recarrega
+              firstModal.hide();
+              alert('Informações e primeira despesa salvas!');
+              setTimeout(() => window.location.reload(), 800);
+
+            } catch (err) {
+              console.error('Erro ao salvar primeira visita ou despesa:', err);
+              alert('Erro ao salvar. Tente novamente.');
+            }
+          }, { once: true });
         }
-
-        try {
-          const resp = await fetch('/api/primeira-visita', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ metaMensal, rendaMensal }),
-          });
-
-          const data = await resp.json();
-          firstModal.hide();
-          alert(data.mensagem || 'Informações salvas com sucesso!');
-          setTimeout(() => window.location.reload(), 800);
-        } catch (err) {
-          console.error('Erro ao salvar primeira visita:', err);
-          alert('Erro ao salvar. Tente novamente.');
-        }
-      }, { once: true });
+      } else {
+        alert(`Bem-vindo pela primeira vez, ${nomeUsuario}!`);
+      }
     }
-  } else {
-    alert(`Bem-vindo pela primeira vez, ${nomeUsuario}!`);
-  }
-}
-    } catch (err) {
+  } catch (err) {
     console.error("Erro ao obter sessão do usuário:", err);
   }
-  // ================================
-  // ▶️ Controle botão "começar"
-  // ================================
-  const comecar = document.getElementById('comecar');
-  const despesas = document.getElementById('formDespesa');
-  const formulario = document.getElementById('formulario');
-
-  if (comecar && despesas && formulario) {
-    comecar.addEventListener('click', () => {
-      despesas.classList.remove('d-none');
-      formulario.classList.add('d-none');
-      comecar.classList.add('d-none');
-    });
-  }
 
   // ================================
-  // 💸 Adicionar despesa
+  // 💸 Funções de despesa existentes
   // ================================
   const btnAdicionar = document.getElementById("btnAdicionar");
   if (btnAdicionar) {
@@ -204,9 +138,6 @@ if (visitaData.primeiraVisita) {
     });
   }
 
-  // ================================
-  // 📋 Pegar despesas
-  // ================================
   async function pegarDespesas() {
     try {
       const response = await fetch("/api/despesas", {
