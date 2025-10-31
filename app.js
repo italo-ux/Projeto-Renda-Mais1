@@ -106,8 +106,6 @@ function autenticar(req, res, next) {
 
 // ================== ROTAS ==================
 
-
-//registro
 app.post("/api/registro", async (req, res) => {
   const { nome, email, senha } = req.body;
   if (!nome || !email || !senha) return res.status(400).json({ erro: "Preencha todos os campos" });
@@ -121,8 +119,6 @@ app.post("/api/registro", async (req, res) => {
   }
 });
 
-
-//login
 app.post("/api/login", async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ erro: "Email e senha obrigatórios" });
@@ -138,29 +134,25 @@ app.post("/api/login", async (req, res) => {
 
 
 
-//primeira visita
-app.get("/api/primeira-visita", autenticar, async (req, res) => {
-  const idUsuario = req.session.usuario.id;
-  try {
-    // 1. Busca o usuário no banco
-    const [rows] = await pooldb.query("SELECT metaMensal, rendaMensal FROM usuarios WHERE id = ?", [idUsuario]);
-
-    if (rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
-
-    const usuario = rows[0];
-
-    // 2. Verifica se a meta ou a renda estão nulas (indicando primeira visita)
-    if (usuario.metaMensal === null || usuario.rendaMensal === null) {
-      res.json({ primeiraVisita: true });
-    } else {
-      res.json({ primeiraVisita: false });
-    }
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
+// ADICIONE ESTA NOVA ROTA AQUI
+// app.js - ROTA POST /api/primeira-visita (COM ADIÇÃO)
+app.post("/api/primeira-visita", autenticar, async (req, res) => {
+  const { metaMensal, rendaMensal } = req.body;
+  const idUsuario = req.session.usuario.id;
+  try {
+    await pooldb.query("UPDATE usuarios SET metaMensal = ?, rendaMensal = ? WHERE id = ?", [metaMensal, rendaMensal, idUsuario]);
+    
+    // NOVO: Atualizar a sessão do usuário com os novos dados
+    req.session.usuario.metaMensal = metaMensal;
+    req.session.usuario.rendaMensal = rendaMensal;
+    
+    res.json({ mensagem: "Informações da primeira visita salvas!" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
 });
+
+
 
 
 app.post("/api/primeira-visita", autenticar, async (req, res) => {
@@ -202,9 +194,32 @@ app.get("/api/despesas", autenticar, async (req, res) => {
   }
 });
 
-app.get("/api/usuario", autenticar, (req, res) => {
-  res.json(req.session.usuario);
+
+
+// app.js - ROTA ATUALIZADA
+app.get("/api/usuario", autenticar, async (req, res) => {
+  const idUsuario = req.session.usuario.id;
+  try {
+    // Buscar dados completos do usuário no banco para garantir metaMensal e rendaMensal atualizados
+    const [rows] = await pooldb.query(
+      "SELECT id, nome, email, metaMensal, rendaMensal FROM usuarios WHERE id = ?", 
+      [idUsuario]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+
+    // Atualizar a sessão para refletir os dados mais recentes
+    req.session.usuario = rows[0]; 
+
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
 });
+
+
 
 app.post("/api/logout", (req, res) => {
   req.session.destroy(err => {
