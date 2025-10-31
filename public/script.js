@@ -150,7 +150,9 @@ if (visitaData.primeiraVisita) {
     alert(`Bem-vindo pela primeira vez, ${nomeUsuario}!`);
   }
 }
-
+    } catch (err) {
+    console.error("Erro ao obter sessão do usuário:", err);
+  }
   // ================================
   // ▶️ Controle botão "começar"
   // ================================
