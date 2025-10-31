@@ -294,7 +294,7 @@ async function abrirModalEdicao(id) {
         alert("Erro ao carregar dados da despesa para edição. Veja o console.");
     }
 }
-
+  
 
   // ================================
   // 📋 Pegar despesas E DELEGAÇÃO DE EVENTOS
@@ -335,9 +335,7 @@ async function abrirModalEdicao(id) {
                   <h5>${d.descricao}</h5>
                   <small>${d.data ? new Date(d.data).toLocaleDateString("pt-BR") : '-'}</small>
                    <div class="d-flex gap-2 mt-3">
-                        <button class="btn-paga btn btn-success" data-id="${d.id}">Conta Paga</button>
-                        <button class="btn-editar btn btn-outline-primary" data-id="${d.id}">Editar</button>
-                        <button class="btn-excluir btn btn-outline-danger" data-id="${d.id}">Excluir</button>
+                       
                        </div>
                 </div>
                 <div class="text-end">
