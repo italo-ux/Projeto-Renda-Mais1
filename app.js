@@ -138,40 +138,33 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/primeira-visita", autenticar, async (req, res) => {
   const idUsuario = req.session.usuario.id;
   try {
-    // 1. Busca o usuário no banco
-    const [rows] = await pooldb.query("SELECT metaMensal, rendaMensal FROM usuarios WHERE id = ?", [idUsuario]);
+    const [rows] = await pooldb.query(
+      "SELECT primeira_visita FROM usuarios WHERE id = ?",
+      [idUsuario]
+    );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
-    }
+    if (rows.length === 0) return res.status(404).json({ erro: "Usuário não encontrado" });
 
     const usuario = rows[0];
-
-    // 2. Verifica se a meta ou a renda estão nulas (indicando primeira visita)
-    if (usuario.metaMensal === null || usuario.rendaMensal === null) {
-      res.json({ primeiraVisita: true });
-    } else {
-      res.json({ primeiraVisita: false });
-    }
+    res.json({ primeiraVisita: usuario.primeira_visita });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
 });
-
 
 app.post("/api/primeira-visita", autenticar, async (req, res) => {
   const { metaMensal, rendaMensal } = req.body;
   const idUsuario = req.session.usuario.id;
   try {
-    await pooldb.query("UPDATE usuarios SET metaMensal = ?, rendaMensal = ? WHERE id = ?", [metaMensal, rendaMensal, idUsuario]);
+    await pooldb.query(
+      "UPDATE usuarios SET metaMensal = ?, rendaMensal = ?, primeira_visita = FALSE WHERE id = ?",
+      [metaMensal, rendaMensal, idUsuario]
+    );
     res.json({ mensagem: "Informações da primeira visita salvas!" });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
 });
-
-
-
 
 
 app.post("/api/despesas", autenticar, async (req, res) => {

@@ -109,53 +109,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 👋 Primeira visita
     // ================================
     const visitaResp = await fetch(`/api/primeira-visita`, { credentials: "include" });
-    const visitaData = await visitaResp.json();
+const visitaData = await visitaResp.json();
 
-    if (visitaData.primeiraVisita) {
-      const greeting = document.getElementById('firstVisitGreeting');
-      if (greeting)
-        greeting.innerText = `Bem-vindo pela primeira vez, ${nomeUsuario}! Antes de começar, conte um pouco sobre sua casa.`;
+if (visitaData.primeiraVisita) {
+  const modalEl = document.getElementById('firstVisitModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const firstModal = new bootstrap.Modal(modalEl);
+    firstModal.show();
 
-      const modalEl = document.getElementById('firstVisitModal');
-      if (modalEl && typeof bootstrap !== 'undefined') {
-        const firstModal = new bootstrap.Modal(modalEl);
-        firstModal.show();
+    const saveBtn = document.getElementById('firstVisitSave');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async () => {
+        const metaMensal = document.getElementById('metaMensal')?.value;
+        const rendaMensal = document.getElementById('rendaMensal')?.value;
 
-        const saveBtn = document.getElementById('firstVisitSave');
-        if (saveBtn) {
-          saveBtn.addEventListener('click', async () => {
-            const metaMensal = document.getElementById('metaMensal')?.value || '';
-            const rendaMensal = document.getElementById('rendaMensal')?.value || '';
-
-            const payload = { metaMensal, rendaMensal };
-
-            try {
-              const resp = await fetch('/api/primeira-visita', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(payload),
-              });
-
-              const data = await resp.json();
-              firstModal.hide();
-              alert(data.mensagem || 'Informações salvas com sucesso!');
-              setTimeout(() => window.location.reload(), 800);
-            } catch (err) {
-              console.error('Erro ao salvar primeira visita:', err);
-              alert('Erro ao salvar. Tente novamente.');
-            }
-          }, { once: true });
+        if (!metaMensal || !rendaMensal) {
+          alert('Preencha os campos corretamente.');
+          return;
         }
-      } else {
-        alert(`Bem-vindo pela primeira vez, ${nomeUsuario}!`);
-      }
-    } else {
-      console.log("Usuário já visitou antes.");
+
+        try {
+          const resp = await fetch('/api/primeira-visita', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ metaMensal, rendaMensal }),
+          });
+
+          const data = await resp.json();
+          firstModal.hide();
+          alert(data.mensagem || 'Informações salvas com sucesso!');
+          setTimeout(() => window.location.reload(), 800);
+        } catch (err) {
+          console.error('Erro ao salvar primeira visita:', err);
+          alert('Erro ao salvar. Tente novamente.');
+        }
+      }, { once: true });
     }
-  } catch (err) {
-    console.error("Erro ao carregar usuário ou verificar visita:", err);
+  } else {
+    alert(`Bem-vindo pela primeira vez, ${nomeUsuario}!`);
   }
+}
 
   // ================================
   // ▶️ Controle botão "começar"

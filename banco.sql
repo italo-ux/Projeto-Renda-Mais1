@@ -17,6 +17,7 @@ CREATE TABLE usuarios (
     senha VARCHAR(255) NOT NULL,
     metaMensal DECIMAL(10,2) DEFAULT NULL,
     rendaMensal DECIMAL(10,2) DEFAULT NULL,
+    primeira_visita BOOLEAN DEFAULT TRUE, -- NOVA COLUNA
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
