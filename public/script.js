@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const usuarioNameEl = document.getElementById('usuario-name');
     if (usuarioNameEl) usuarioNameEl.innerHTML = nomeUsuario;
 
-    // CORREÇÃO 1: Chamada principal das despesas com sessaoData
+    // Chamada principal das despesas com sessaoData (para calcular saldo)
     await pegarDespesas(sessaoData); 
 
     // ================================
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
           console.error("Erro ao inicializar o modal do Bootstrap. Verifique se o JS do Bootstrap está carregado.", e);
           alert(`Bem-vindo pela primeira vez, ${nomeUsuario}! (Erro no Modal: ${e.message})`);
-          return; // Para o fluxo aqui se o modal falhar
+          return; 
         }
 
         const saveBtn = document.getElementById('firstVisitSave');
@@ -213,7 +213,11 @@ document.addEventListener('DOMContentLoaded', async () => {
               const data = await resp.json();
               firstModal.hide();
               alert(data.mensagem || 'Informações salvas com sucesso!');
-              // Recarregar garante que a sessão atualizada e os cálculos sejam refeitos
+              
+              // CORREÇÃO CRÍTICA: Atualiza sessaoData localmente para evitar que o modal reapareça
+              sessaoData.metaMensal = metaMensal;
+              sessaoData.rendaMensal = rendaMensal;
+              
               setTimeout(() => window.location.reload(), 800); 
             } catch (err) {
               console.error('Erro ao salvar primeira visita:', err);
@@ -273,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           alert(result.mensagem || result.erro || "Erro ao adicionar despesa");
         } else {
           alert(result.mensagem || "Despesa adicionada com sucesso!");
-          // CORREÇÃO 2: Chamada após adicionar despesa, passando sessaoData
+          // Recarrega a lista de despesas após o sucesso
           await pegarDespesas(sessaoData); 
         }
       } catch (error) {
