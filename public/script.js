@@ -129,45 +129,21 @@ if (visitaData.primeiraVisita) {
         }
 
         try {
-  // 1️⃣ Salva meta mensal e renda
-  const resp = await fetch('/api/primeira-visita', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ metaMensal, rendaMensal }),
-  });
-  const data = await resp.json();
+          const resp = await fetch('/api/primeira-visita', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ metaMensal, rendaMensal }),
+          });
 
-  // 2️⃣ Pega campos da primeira despesa do modal
-  const descricao = document.getElementById('tituloDespesa')?.value;
-  const valor = document.getElementById('firstValor')?.value;
-  const categoria = document.getElementById('firstDescricao')?.value || "Primeira Visita";
-  const dataVencimento = document.getElementById('firstDataVencimento')?.value;
-
-  // 3️⃣ Adiciona a despesa se os campos estiverem preenchidos
-  if (descricao && valor) {
-    await fetch('/api/despesas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        descricao,
-        valor,
-        categoria,
-        data: dataVencimento
-      }),
-    });
-  }
-
-  // 4️⃣ Fecha modal e recarrega
-  firstModal.hide();
-  alert('Informações e primeira despesa salvas!');
-  setTimeout(() => window.location.reload(), 800);
-
-} catch (err) {
-  console.error('Erro ao salvar primeira visita ou despesa:', err);
-  alert('Erro ao salvar. Tente novamente.');
-}
+          const data = await resp.json();
+          firstModal.hide();
+          alert(data.mensagem || 'Informações salvas com sucesso!');
+          setTimeout(() => window.location.reload(), 800);
+        } catch (err) {
+          console.error('Erro ao salvar primeira visita:', err);
+          alert('Erro ao salvar. Tente novamente.');
+        }
       }, { once: true });
     }
   } else {
