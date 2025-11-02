@@ -141,16 +141,31 @@ if (visitaData.primeiraVisita) {
             }),
           });
 
+          const data = await resp.json();
+
           if (resp.ok) {
+            // Atualiza a renda local
+            rendaMensalLocal = parseFloat(rendaMensal);
+            
+            // Fecha o modal de forma segura
             firstModal.hide();
-            document.getElementById('firstVisitModal').remove();
+            
+            // Remove o modal do DOM de forma segura
+            const modalEl = document.getElementById('firstVisitModal');
+            if (modalEl) {
+              modalEl.addEventListener('hidden.bs.modal', () => {
+                modalEl.remove();
+              });
+            }
+
+            // Atualiza os valores na tela
+            await pegarDespesas();
           } else {
-            const data = await resp.json();
-            alert(data.erro || 'Erro ao salvar informações.');
+            throw new Error(data.erro || 'Erro ao salvar informações');
           }
         } catch (err) {
-          console.error('Erro:', err);
-          alert('Erro ao conectar com o servidor.');
+          console.error('Erro ao salvar primeira visita:', err);
+          alert(err.message || 'Erro ao conectar com o servidor. Tente novamente.');
         }
       });
     }
