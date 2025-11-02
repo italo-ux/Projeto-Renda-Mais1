@@ -181,31 +181,49 @@ if (visitaData.primeiraVisita) {
   if (btnAdicionar) {
     btnAdicionar.addEventListener("click", async () => {
       const descricao = document.getElementById("descricao").value;
-      const valor = document.getElementById("valor").value;
-      const categoria = document.getElementById("categoria")?.value || "Outro";
+      const valor = parseFloat(document.getElementById("valor").value); // Convertendo para número
+      const categoria = document.getElementById("tipoDespesa")?.value || "Outro";
       const data = document.getElementById("dataVencimento").value;
 
-      const despesa = { descricao, valor, categoria, data };
+      // Validação dos campos
+      if (!descricao || !valor || isNaN(valor)) {
+        alert("Por favor, preencha descrição e valor corretamente");
+        return;
+      }
 
       try {
         const response = await fetch("/api/despesas", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(despesa),
+          body: JSON.stringify({
+            descricao,
+            valor,
+            categoria,
+            data
+          }),
         });
 
         const result = await response.json();
+        
         if (!response.ok) {
-          console.error("Erro /api/despesas:", result);
-          alert(result.mensagem || result.erro || "Erro ao adicionar despesa");
-        } else {
-          alert(result.mensagem || "Despesa adicionada com sucesso!");
-          await pegarDespesas();
+          console.error("Erro ao adicionar despesa:", result);
+          alert(result.erro || "Erro ao adicionar despesa");
+          return;
         }
+
+        // Limpa campos do formulário
+        document.getElementById("descricao").value = "";
+        document.getElementById("valor").value = "";
+        document.getElementById("dataVencimento").value = "";
+        document.getElementById("tipoDespesa").value = "variavel";
+
+        // Atualiza lista de despesas e saldo
+        await pegarDespesas();
+
       } catch (error) {
-        console.error("Erro ao enviar despesa:", error);
-        alert("Erro ao enviar despesa. Veja console do servidor.");
+        console.error("Erro ao adicionar despesa:", error);
+        alert("Erro ao adicionar despesa. Por favor, tente novamente.");
       }
     });
   }
