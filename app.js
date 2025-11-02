@@ -211,6 +211,55 @@ app.post("/api/logout", (req, res) => {
   });
 });
 
+// Rota para pagar despesa
+app.post("/api/despesas/:id/pagar", autenticar, async (req, res) => {
+  const { id } = req.params;
+  const idUsuario = req.session.usuario.id;
+  
+  try {
+    await pooldb.query(
+      "UPDATE despesas SET pago = TRUE WHERE id = ? AND id_usuario = ?",
+      [id, idUsuario]
+    );
+    res.json({ mensagem: "Despesa marcada como paga" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+// Rota para editar despesa
+app.put("/api/despesas/:id", autenticar, async (req, res) => {
+  const { id } = req.params;
+  const { descricao, valor, categoria, data } = req.body;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    await pooldb.query(
+      "UPDATE despesas SET descricao = ?, valor = ?, categoria = ?, data = ? WHERE id = ? AND id_usuario = ?",
+      [descricao, valor, categoria, data, id, idUsuario]
+    );
+    res.json({ mensagem: "Despesa atualizada" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+// Rota para excluir despesa
+app.delete("/api/despesas/:id", autenticar, async (req, res) => {
+  const { id } = req.params;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    await pooldb.query(
+      "DELETE FROM despesas WHERE id = ? AND id_usuario = ?",
+      [id, idUsuario]
+    );
+    res.json({ mensagem: "Despesa excluída" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
 // ================== INICIAR SERVIDOR ==================
 const PORT = process.env.PORT;
 if (!PORT) {

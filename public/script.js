@@ -196,19 +196,22 @@ if (visitaData.primeiraVisita) {
   if (btnAdicionar) {
     btnAdicionar.addEventListener("click", async () => {
       const descricao = document.getElementById("descricao").value;
-      const valor = parseFloat(document.getElementById("valor").value); // Convertendo para número
+      const valor = parseFloat(document.getElementById("valor").value);
       const categoria = document.getElementById("tipoDespesa")?.value || "Outro";
       const data = document.getElementById("dataVencimento").value;
 
-      // Validação dos campos
       if (!descricao || !valor || isNaN(valor)) {
         alert("Por favor, preencha descrição e valor corretamente");
         return;
       }
 
       try {
-        const response = await fetch("/api/despesas", {
-          method: "POST",
+        const editandoId = btnAdicionar.dataset.editando;
+        const method = editandoId ? 'PUT' : 'POST';
+        const url = editandoId ? `/api/despesas/${editandoId}` : '/api/despesas';
+
+        const response = await fetch(url, {
+          method,
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
@@ -219,26 +222,28 @@ if (visitaData.primeiraVisita) {
           }),
         });
 
-        const result = await response.json();
-        
         if (!response.ok) {
-          console.error("Erro ao adicionar despesa:", result);
-          alert(result.erro || "Erro ao adicionar despesa");
-          return;
+          const result = await response.json();
+          throw new Error(result.erro || 'Erro ao salvar despesa');
         }
 
-        // Limpa campos do formulário
+        // Limpa campos e reseta botão
         document.getElementById("descricao").value = "";
         document.getElementById("valor").value = "";
         document.getElementById("dataVencimento").value = "";
         document.getElementById("tipoDespesa").value = "variavel";
+        btnAdicionar.textContent = "Adicionar Despesa";
+        delete btnAdicionar.dataset.editando;
 
-        // Atualiza lista de despesas e saldo
+        // Fecha modal
+        bootstrap.Modal.getInstance(document.getElementById('Despesas-modal')).hide();
+
+        // Atualiza lista
         await pegarDespesas();
 
       } catch (error) {
-        console.error("Erro ao adicionar despesa:", error);
-        alert("Erro ao adicionar despesa. Por favor, tente novamente.");
+        console.error("Erro ao salvar despesa:", error);
+        alert(error.message);
       }
     });
   }
@@ -252,7 +257,6 @@ if (visitaData.primeiraVisita) {
       if (!resp.ok) throw new Error("Falha ao buscar despesas");
       const despesas = await resp.json();
 
-      // container de despesas (se existir)
       const container = document.querySelector(".row.row-cols-1.g-4");
       if (container) {
         container.innerHTML = "";
@@ -271,10 +275,31 @@ if (visitaData.primeiraVisita) {
                   <div class="text-end">
                     <div class="fw-bold">${valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
                     <div>${d.categoria || ''}</div>
+                    <div class="btn-group mt-2">
+                      <button class="btn btn-sm btn-outline-success btn-pagar" data-id="${d.id}">
+                        ${d.pago ? 'Pago' : 'Pagar'}
+                      </button>
+                      <button class="btn btn-sm btn-outline-primary btn-editar" data-id="${d.id}">
+                        Editar
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger btn-excluir" data-id="${d.id}">
+                        Excluir
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>`;
+
+          // Adicionar event listeners para os botões
+          const btnPagar = card.querySelector('.btn-pagar');
+          const btnEditar = card.querySelector('.btn-editar');
+          const btnExcluir = card.querySelector('.btn-excluir');
+
+          btnPagar.addEventListener('click', () => pagarDespesa(d.id));
+          btnEditar.addEventListener('click', () => editarDespesa(d));
+          btnExcluir.addEventListener('click', () => excluirDespesa(d.id));
+
           container.appendChild(card);
         });
       }
@@ -325,5 +350,58 @@ if (visitaData.primeiraVisita) {
         window.location.href = '/login.html';
       }
     });
+  }
+
+  async function pagarDespesa(id) {
+    try {
+      const resp = await fetch(`/api/despesas/${id}/pagar`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!resp.ok) throw new Error('Falha ao pagar despesa');
+      
+      // Recarrega despesas e atualiza saldo
+      await pegarDespesas();
+    } catch (err) {
+      console.error('Erro ao pagar despesa:', err);
+      alert('Erro ao pagar despesa');
+    }
+  }
+
+  async function editarDespesa(despesa) {
+    // Preenche modal com dados atuais
+    document.getElementById('descricao').value = despesa.descricao;
+    document.getElementById('valor').value = despesa.valor;
+    document.getElementById('dataVencimento').value = despesa.data;
+    document.getElementById('tipoDespesa').value = despesa.categoria;
+
+    // Modifica o botão Adicionar para Salvar
+    const btnAdicionar = document.getElementById('btnAdicionar');
+    btnAdicionar.textContent = 'Salvar Alterações';
+    btnAdicionar.dataset.editando = despesa.id;
+
+    // Abre o modal
+    const modal = new bootstrap.Modal(document.getElementById('Despesas-modal'));
+    modal.show();
+  }
+
+  async function excluirDespesa(id) {
+    if (!confirm('Tem certeza que deseja excluir esta despesa?')) return;
+
+    try {
+      const resp = await fetch(`/api/despesas/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!resp.ok) throw new Error('Falha ao excluir despesa');
+      
+      // Recarrega despesas e atualiza saldo
+      await pegarDespesas();
+    } catch (err) {
+      console.error('Erro ao excluir despesa:', err);
+      alert('Erro ao excluir despesa');
+    }
   }
 });

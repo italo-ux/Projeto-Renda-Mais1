@@ -34,3 +34,5 @@ CREATE TABLE despesas (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
 );
+-- Adicione à tabela despesas
+ALTER TABLE despesas ADD COLUMN pago BOOLEAN DEFAULT FALSE;
