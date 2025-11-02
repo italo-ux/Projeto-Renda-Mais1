@@ -260,12 +260,24 @@ if (visitaData.primeiraVisita) {
       const container = document.querySelector(".row.row-cols-1.g-4");
       if (container) {
         container.innerHTML = "";
+        
+        // Separar despesas pagas e pendentes
+        let totalPago = 0;
+        let totalPendente = 0;
+
         despesas.forEach(d => {
           const valorNum = Number(d.valor || 0);
+          // Soma ao total apropriado
+          if (d.pago) {
+            totalPago += valorNum;
+          } else {
+            totalPendente += valorNum;
+          }
+
           const card = document.createElement("div");
           card.className = "col";
           card.innerHTML = `
-            <div class="conta p-1 text-left card shadow border-0 rounded-4 h-100">
+            <div class="conta p-1 text-left card shadow border-0 rounded-4 h-100 ${d.pago ? 'bg-light' : ''}">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
                   <div>
@@ -276,10 +288,10 @@ if (visitaData.primeiraVisita) {
                     <div class="fw-bold">${valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
                     <div>${d.categoria || ''}</div>
                     <div class="btn-group mt-2">
-                      <button class="btn btn-sm btn-outline-success btn-pagar" data-id="${d.id}">
-                        ${d.pago ? 'Pago' : 'Pagar'}
+                      <button class="btn btn-sm ${d.pago ? 'btn-success' : 'btn-outline-success'} btn-pagar" data-id="${d.id}">
+                        ${d.pago ? 'Pago ✓' : 'Pagar'}
                       </button>
-                      <button class="btn btn-sm btn-outline-primary btn-editar" data-id="${d.id}">
+                      <button class="btn btn-sm btn-outline-primary btn-editar" data-id="${d.id}" ${d.pago ? 'disabled' : ''}>
                         Editar
                       </button>
                       <button class="btn btn-sm btn-outline-danger btn-excluir" data-id="${d.id}">
@@ -291,7 +303,7 @@ if (visitaData.primeiraVisita) {
               </div>
             </div>`;
 
-          // Adicionar event listeners para os botões
+          // Adicionar event listeners
           const btnPagar = card.querySelector('.btn-pagar');
           const btnEditar = card.querySelector('.btn-editar');
           const btnExcluir = card.querySelector('.btn-excluir');
@@ -302,57 +314,42 @@ if (visitaData.primeiraVisita) {
 
           container.appendChild(card);
         });
-      }
 
-      // soma total das despesas
-      const totalPendente = despesas.reduce((s, d) => s + Number(d.valor || 0), 0);
-      const totalEl = document.getElementById("total-pendente");
-      if (totalEl) totalEl.innerText = totalPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-      // tenta obter renda atual do backend (garante que usamos valor atualizado)
-      try {
-        const userResp = await fetch("/api/usuario", { credentials: "include" });
-        if (userResp.ok) {
-          const userData = await userResp.json();
-          if (userData.rendaMensal != null) rendaMensalLocal = Number(userData.rendaMensal);
+        // Atualiza total pendente
+        const totalEl = document.getElementById("total-pendente");
+        if (totalEl) {
+          totalEl.innerText = totalPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
         }
-      } catch (e) {
-        // manter rendaMensalLocal como estava
-        console.warn("Não foi possível obter renda do backend:", e);
+
+        // Tenta obter renda atual do backend
+        try {
+          const userResp = await fetch("/api/usuario", { credentials: "include" });
+          if (userResp.ok) {
+            const userData = await userResp.json();
+            if (userData.rendaMensal != null) rendaMensalLocal = Number(userData.rendaMensal);
+          }
+        } catch (e) {
+          console.warn("Não foi possível obter renda do backend:", e);
+        }
+
+        // Calcula saldo = rendaMensal - apenas despesas PAGAS
+        const saldoCalc = (rendaMensalLocal != null) ? (rendaMensalLocal - totalPago) : (0 - totalPago);
+        const saldoText = saldoCalc.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+        // Atualiza elementos de saldo
+        document.querySelectorAll('#Saldo').forEach(el => { 
+          el.innerText = saldoText;
+        });
       }
-
-      // calcula saldo = rendaMensalLocal - totalPendente (se renda definida)
-      const saldoCalc = (rendaMensalLocal != null) ? (rendaMensalLocal - totalPendente) : (0 - totalPendente);
-      const saldoText = saldoCalc.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-      // atualiza todos os elementos com id="Saldo" (compatibilidade com HTML atual)
-      document.querySelectorAll('#Saldo').forEach(el => { el.innerText = saldoText; });
-
     } catch (error) {
       console.error("Erro ao pegar despesas:", error);
     }
   }
 
-  await pegarDespesas();
-
-  // ================================
-  // 🚪 Logout
-  // ================================
-  const sair = document.getElementById('sair');
-  if (sair) {
-    sair.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
-      } catch (err) {
-        console.error('Erro ao fazer logout:', err);
-      } finally {
-        window.location.href = '/login.html';
-      }
-    });
-  }
-
+  // Função de pagar despesa atualizada
   async function pagarDespesa(id) {
+    if (!confirm('Confirma o pagamento desta despesa? Isso irá atualizar seu saldo.')) return;
+
     try {
       const resp = await fetch(`/api/despesas/${id}/pagar`, {
         method: 'POST',
