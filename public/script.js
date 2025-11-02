@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let userId;
   let nomeUsuario;
+  let rendaMensalLocal = null; // <-- nova variável que guarda a renda mensal do usuário
 
   // ================================
   // 🧾 Cadastro de usuário
@@ -101,7 +102,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     userId = sessaoData.id;
     nomeUsuario = sessaoData.nome;
-
+    // guarda a renda vinda do backend (se estiver presente na resposta da sessão)
+    if (sessaoData.rendaMensal != null) rendaMensalLocal = Number(sessaoData.rendaMensal);
     const usuarioNameEl = document.getElementById('usuario-name');
     if (usuarioNameEl) usuarioNameEl.innerHTML = nomeUsuario;
 
@@ -209,53 +211,64 @@ if (visitaData.primeiraVisita) {
   }
 
   // ================================
-  // 📋 Pegar despesas
+  // 📋 Pegar despesas (busca despesas + atualiza total e saldo)
   // ================================
   async function pegarDespesas() {
     try {
-      const response = await fetch("/api/despesas", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include"
-      });
+      const resp = await fetch("/api/despesas", { credentials: "include" });
+      if (!resp.ok) throw new Error("Falha ao buscar despesas");
+      const despesas = await resp.json();
 
-      if (!response.ok) throw new Error('Falha ao buscar despesas');
-
-      const despesas = await response.json();
+      // container de despesas (se existir)
       const container = document.querySelector(".row.row-cols-1.g-4");
-      if (!container) return;
-
-      container.innerHTML = "";
-      let totalPendente = 0;
-
-      despesas.forEach(d => {
-        const valorNum = Number(d.valor);
-        const valorFmt = valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-        const card = document.createElement("div");
-        card.className = "col";
-        card.innerHTML = `
-          <div class="conta p-1 text-left card shadow border-0 rounded-4 h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
-                <div>
-                  <h5>${d.descricao}</h5>
-                  <small>${d.data ? new Date(d.data).toLocaleDateString("pt-BR") : '-'}</small>
-                </div>
-                <div class="text-end">
-                  <div class="fw-bold">${valorFmt}</div>
-                  <div>${d.categoria}</div>
+      if (container) {
+        container.innerHTML = "";
+        despesas.forEach(d => {
+          const valorNum = Number(d.valor || 0);
+          const card = document.createElement("div");
+          card.className = "col";
+          card.innerHTML = `
+            <div class="conta p-1 text-left card shadow border-0 rounded-4 h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
+                  <div>
+                    <h5>${d.descricao}</h5>
+                    <small>${d.data ? new Date(d.data).toLocaleDateString("pt-BR") : '-'}</small>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-bold">${valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                    <div>${d.categoria || ''}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>`;
-        container.appendChild(card);
-        totalPendente += valorNum;
-      });
+            </div>`;
+          container.appendChild(card);
+        });
+      }
 
+      // soma total das despesas
+      const totalPendente = despesas.reduce((s, d) => s + Number(d.valor || 0), 0);
       const totalEl = document.getElementById("total-pendente");
-      if (totalEl)
-        totalEl.innerText = totalPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      if (totalEl) totalEl.innerText = totalPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+      // tenta obter renda atual do backend (garante que usamos valor atualizado)
+      try {
+        const userResp = await fetch("/api/usuario", { credentials: "include" });
+        if (userResp.ok) {
+          const userData = await userResp.json();
+          if (userData.rendaMensal != null) rendaMensalLocal = Number(userData.rendaMensal);
+        }
+      } catch (e) {
+        // manter rendaMensalLocal como estava
+        console.warn("Não foi possível obter renda do backend:", e);
+      }
+
+      // calcula saldo = rendaMensalLocal - totalPendente (se renda definida)
+      const saldoCalc = (rendaMensalLocal != null) ? (rendaMensalLocal - totalPendente) : (0 - totalPendente);
+      const saldoText = saldoCalc.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+      // atualiza todos os elementos com id="Saldo" (compatibilidade com HTML atual)
+      document.querySelectorAll('#Saldo').forEach(el => { el.innerText = saldoText; });
 
     } catch (error) {
       console.error("Erro ao pegar despesas:", error);
