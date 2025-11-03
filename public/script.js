@@ -642,22 +642,26 @@ if (visitaData.primeiraVisita) {
   }
 
   function setupAddMetaFlow() {
-    // Encontrar botão e modal
     const btnAddMeta = document.getElementById('btn-adicionar-meta');
     const modalEl = document.getElementById('addMetaModal');
     
-    if (!btnAddMeta || !modalEl) {
-      console.warn('Elementos do modal de meta não encontrados');
+    if (!btnAddMeta) {
+      console.error('Botão de adicionar meta não encontrado');
       return;
     }
 
-    // Configurar botão para abrir modal
+    if (!modalEl) {
+      console.error('Modal de adicionar meta não encontrado');
+      return;
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+
     btnAddMeta.addEventListener('click', () => {
-      const modal = new bootstrap.Modal(modalEl);
+      console.log('Abrindo modal...');
       modal.show();
     });
 
-    // Configurar botão de salvar
     const btnSave = document.getElementById('addMetaSave');
     if (btnSave) {
       btnSave.addEventListener('click', async () => {
