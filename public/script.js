@@ -401,4 +401,319 @@ if (visitaData.primeiraVisita) {
       alert('Erro ao excluir despesa');
     }
   }
+
+  // ================================
+  // 🎯 Metas
+  // ================================
+  async function pegarMetas() {
+    const metasContainer = document.getElementById('metasContainer');
+    if (!metasContainer) return;
+    try {
+      const resp = await fetch('/api/metas', { credentials: 'include' });
+      if (!resp.ok) throw new Error('Falha ao buscar metas');
+      const metas = await resp.json();
+
+      metasContainer.innerHTML = '';
+      // contador
+      let concluidas = 0, pendentes = 0;
+      metas.forEach(m => {
+        const isConcluida = Boolean(m.concluida);
+        if (isConcluida) concluidas++; else pendentes++;
+        const col = document.createElement('div');
+        col.className = 'col-12 col-md-4';
+        col.innerHTML = `
+          <div class="card card-meta h-100 shadow border-0" data-id="${m.id}">
+            <div class="card-body d-flex flex-column position-relative">
+              <div class="position-absolute top-0 end-0 m-2">
+                <div class="dropdown">
+                  <button class="btn btn-dots-lg" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-id="${m.id}">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end p-2">
+                    <button class="btn dropdown-item action-concluir w-100 mb-1" data-id="${m.id}">${isConcluida ? 'Concluída' : 'Concluir'}</button>
+                    <button class="btn dropdown-item action-editar w-100 mb-1" data-id="${m.id}" type="button">Editar</button>
+                    <button class="btn dropdown-item action-remover w-100 text-danger" data-id="${m.id}" type="button">Remover</button>
+                  </div>
+                </div>
+              </div>
+
+              <h5 class="card-title">${m.titulo}</h5>
+              <p class="card-text">${m.descricao || ''}</p>
+              <p class="mt-auto">Guardado: ${formatBRL(m.guardado)}</p>
+              <p>Meta: ${formatBRL(m.valor)}</p>
+            </div>
+          </div>
+        `;
+        metasContainer.appendChild(col);
+      });
+
+      const metasConcluidas = document.getElementById('metasConcluidas');
+      if (metasConcluidas) metasConcluidas.textContent = String(concluidas);
+      const metasPendentes = document.getElementById('metasPendentes');
+      if (metasPendentes) metasPendentes.textContent = String(pendentes);
+      const totalMetas = document.getElementById('totalMetas');
+      if (totalMetas) totalMetas.textContent = String(metas.length);
+
+    } catch (err) {
+      console.error('Erro ao obter metas:', err);
+    }
+  }
+
+// nova função para abrir modal de meta por id
+  async function openMetaModal(id) {
+    try {
+      // tenta achar dados no DOM primeiro (ex.: card com data-id)
+      const card = document.querySelector(`.card[data-id="${id}"]`);
+      if (card) {
+        const titulo = card.querySelector('.card-title')?.textContent?.trim() || '—';
+        const desc = card.querySelector('.card-text')?.textContent?.trim() || '—';
+        const guardado = card.querySelector('p.mt-auto')?.textContent?.replace('Guardado:','').trim() || 'R$ 0,00';
+        const meta = card.querySelectorAll('p')[3] ? card.querySelectorAll('p')[3].textContent.replace('Meta:','').trim() : '';
+        document.getElementById('metaDetalhesTitulo').textContent = titulo;
+        document.getElementById('metaDetalhesDescricao').textContent = desc;
+        document.getElementById('metaDetalhesGuardado').textContent = guardado;
+        if (meta) document.getElementById('metaDetalhesValor').textContent = meta;
+      }
+
+      // tentar obter dados mais completos do backend (se existir rota)
+      try {
+        const resp = await fetch(`/api/metas/${id}`, { credentials: 'include' });
+        if (resp.ok) {
+          const m = await resp.json();
+          if (m.titulo) document.getElementById('metaDetalhesTitulo').textContent = m.titulo;
+          if (m.descricao != null) document.getElementById('metaDetalhesDescricao').textContent = m.descricao || '—';
+          if (m.guardado != null) document.getElementById('metaDetalhesGuardado').textContent = formatBRL(m.guardado);
+          if (m.valor != null) document.getElementById('metaDetalhesValor').textContent = formatBRL(m.valor);
+          if (m.dataPrevista) document.getElementById('metaDetalhesData').textContent = new Date(m.dataPrevista).toLocaleDateString('pt-BR');
+          document.getElementById('metaDetalhesStatus').textContent = m.concluida ? 'Concluída' : 'Pendente';
+        }
+      } catch (e) {
+        // ok — continuar com dados do DOM se backend indisponível
+      }
+
+      // abre modal
+      const modalEl = document.getElementById('metaDetalhesModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    } catch (err) {
+      console.error('Erro ao abrir modal de meta:', err);
+    }
+  }
+
+// extensão em delegation para abrir modal ao clicar no card (ignora clicks no dropdown)
+  function setupDelegation() {
+    // ...existing code...
+    const metasContainer = document.getElementById('metasContainer');
+    if (metasContainer) {
+      metasContainer.addEventListener('click', (e) => {
+        // se clicou dentro do dropdown/menu, ignore (menu já tem handlers)
+        if (e.target.closest('.dropdown')) return;
+
+        const card = e.target.closest('.card');
+        if (!card) return;
+        const id = card.dataset.id || card.querySelector('[data-id]')?.dataset.id;
+        if (id) openMetaModal(id);
+      });
+    }
+    // ...existing code...
+  }
+
+  // ================================
+  // ► Modal + criação dinâmica de Metas
+  // ================================
+  function ensureAddMetaModal() {
+    if (document.getElementById('addMetaModal')) return;
+    const html = `
+      <div class="modal fade" id="addMetaModal" tabindex="-1" aria-labelledby="addMetaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addMetaModalLabel">Adicionar Meta</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Título</label>
+                <input id="metaTitulo" class="form-control" type="text" placeholder="Ex: Viagem" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <textarea id="metaDescricao" class="form-control" rows="2" placeholder="Descrição opcional"></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Valor da meta (R$)</label>
+                <input id="metaValor" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Já guardado (R$)</label>
+                <input id="metaGuardado" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Data prevista</label>
+                <input id="metaData" class="form-control" type="date" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="addMetaCancel" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button id="addMetaSave" type="button" class="btn btn-success">Adicionar Meta</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+
+  function createMetaCardDOM(m) {
+    const col = document.createElement('div');
+    col.className = 'col-12 col-md-4';
+    col.innerHTML = `
+      <div class="card card-meta h-100 shadow border-0" data-id="${m.id}">
+        <div class="card-body d-flex flex-column position-relative">
+          <div class="position-absolute top-0 end-0 m-2">
+            <div class="dropdown">
+              <button class="btn btn-dots-lg" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-id="${m.id}">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end p-2">
+                <button class="btn dropdown-item action-concluir w-100 mb-1" data-id="${m.id}" type="button">${m.concluida ? 'Concluída' : 'Concluir'}</button>
+                <button class="btn dropdown-item action-editar w-100 mb-1" data-id="${m.id}" type="button" ${m.concluida ? 'disabled' : ''}>Editar</button>
+                <button class="btn dropdown-item action-remover w-100 text-danger" data-id="${m.id}" type="button">Remover</button>
+              </div>
+            </div>
+          </div>
+
+          <h5 class="card-title">${escapeHtml(m.titulo)}</h5>
+          <p class="card-text">${escapeHtml(m.descricao || '')}</p>
+          <p class="mt-auto">Guardado: ${formatBRL(m.guardado)}</p>
+          <p>Meta: ${formatBRL(m.valor)}</p>
+        </div>
+      </div>
+    `;
+    return col;
+  }
+
+  // atualiza contadores a partir do DOM das metas
+  function refreshMetaCounters() {
+    const metas = Array.from(document.querySelectorAll('#metasContainer .card[data-id]'));
+    const total = metas.length;
+    const concluidas = metas.filter(c => {
+      const btn = c.querySelector('.action-concluir');
+      return btn && (btn.textContent || '').trim().toLowerCase().includes('concluída');
+    }).length;
+    const pendentes = total - concluidas;
+
+    const metasConcluidas = document.getElementById('metasConcluidas');
+    if (metasConcluidas) metasConcluidas.textContent = String(concluidas);
+    const metasPendentes = document.getElementById('metasPendentes');
+    if (metasPendentes) metasPendentes.textContent = String(pendentes);
+    const totalMetas = document.getElementById('totalMetas');
+    if (totalMetas) totalMetas.textContent = String(total);
+  }
+
+  // inclui meta no DOM e tenta persistir no backend (se existir rota)
+  async function addMeta(meta) {
+    const metasContainer = document.getElementById('metasContainer');
+    if (!metasContainer) return;
+
+    // tenta enviar ao backend — se falhar, apenas adiciona client-side
+    try {
+      const resp = await fetch('/api/metas', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(meta)
+      });
+      if (resp.ok) {
+        const data = await resp.json().catch(()=>({}));
+        // backend pode retornar id — use se houver
+        if (data.id) meta.id = data.id;
+      }
+    } catch (e) {
+      // rota não disponível ou falha — continuar client-side
+      console.warn('Não foi possível persistir meta no backend, adicionando localmente:', e);
+    }
+
+    const card = createMetaCardDOM(meta);
+    metasContainer.prepend(card); // adiciona no topo
+    refreshMetaCounters();
+  }
+
+  function setupAddMetaFlow() {
+    ensureAddMetaModal();
+
+    // descobrir botão de abrir modal
+    let openBtn = document.getElementById('btn-adicionar-meta');
+    if (!openBtn) {
+      // fallback: botão com texto "Adicionar nova Meta"
+      openBtn = Array.from(document.querySelectorAll('button, .button-text')).find(el => (el.textContent || '').trim().toLowerCase().includes('adicionar meta'));
+    }
+    if (openBtn) {
+      openBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const modalEl = document.getElementById('addMetaModal');
+        if (modalEl && typeof bootstrap !== 'undefined') new bootstrap.Modal(modalEl).show();
+      });
+    }
+
+    // submit
+    document.body.addEventListener('click', async (e) => {
+      if (!e.target) return;
+      if (e.target.id === 'addMetaSave') {
+        const titulo = document.getElementById('metaTitulo').value.trim();
+        const descricao = document.getElementById('metaDescricao').value.trim();
+        const valor = parseFloat(document.getElementById('metaValor').value) || 0;
+        const guardado = parseFloat(document.getElementById('metaGuardado').value) || 0;
+        const dataPrevista = document.getElementById('metaData').value || null;
+
+        if (!titulo) {
+          alert('Informe o título da meta.');
+          return;
+        }
+
+        const meta = {
+          id: 'm' + Date.now(),
+          titulo,
+          descricao,
+          valor,
+          guardado,
+          dataPrevista,
+          concliuda: false,
+          concluida: false
+        };
+
+        // fecha modal
+        const modalEl = document.getElementById('addMetaModal');
+        const inst = modalEl && bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+
+        // limpar campos
+        document.getElementById('metaTitulo').value = '';
+        document.getElementById('metaDescricao').value = '';
+        document.getElementById('metaValor').value = '';
+        document.getElementById('metaGuardado').value = '';
+        document.getElementById('metaData').value = '';
+
+        await addMeta(meta);
+      }
+    });
+  }
+
+  // pequeno helper para escapar texto em innerHTML
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;');
+  }
+
+  // inicializa fluxo de adicionar metas (se estiver na página de metas)
+  if (document.getElementById('metasContainer')) {
+    setupAddMetaFlow();
+  }
+
+  // Inicializa
+  await pegarDespesas();
+  await pegarMetas();
+  setupDelegation();
 });
