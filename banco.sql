@@ -36,3 +36,17 @@ CREATE TABLE despesas (
 );
 -- Adicione à tabela despesas
 ALTER TABLE despesas ADD COLUMN pago BOOLEAN DEFAULT FALSE;
+
+
+CREATE TABLE metas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    titulo VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    valor DECIMAL(10,2) NOT NULL,
+    guardado DECIMAL(10,2) DEFAULT 0,
+    dataPrevista DATE,
+    concluida BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
+);

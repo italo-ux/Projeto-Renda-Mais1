@@ -260,6 +260,96 @@ app.delete("/api/despesas/:id", autenticar, async (req, res) => {
   }
 });
 
+// Rotas para metas
+app.post("/api/metas", autenticar, async (req, res) => {
+  const { titulo, descricao, valor, guardado, dataPrevista } = req.body;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    const [result] = await pooldb.query(
+      "INSERT INTO metas (id_usuario, titulo, descricao, valor, guardado, dataPrevista) VALUES (?, ?, ?, ?, ?, ?)",
+      [idUsuario, titulo, descricao, valor, guardado || 0, dataPrevista]
+    );
+    res.json({ id: result.insertId, mensagem: "Meta criada com sucesso" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.get("/api/metas", autenticar, async (req, res) => {
+  const idUsuario = req.session.usuario.id;
+  try {
+    const [rows] = await pooldb.query(
+      "SELECT * FROM metas WHERE id_usuario = ? ORDER BY criado_em DESC",
+      [idUsuario]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.get("/api/metas/:id", autenticar, async (req, res) => {
+  const { id } = req.params;
+  const idUsuario = req.session.usuario.id;
+  try {
+    const [rows] = await pooldb.query(
+      "SELECT * FROM metas WHERE id = ? AND id_usuario = ?",
+      [id, idUsuario]
+    );
+    if (!rows.length) return res.status(404).json({ erro: "Meta não encontrada" });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.put("/api/metas/:id", autenticar, async (req, res) => {
+  const { id } = req.params;
+  const { titulo, descricao, valor, guardado, dataPrevista } = req.body;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    await pooldb.query(
+      "UPDATE metas SET titulo = ?, descricao = ?, valor = ?, guardado = ?, dataPrevista = ? WHERE id = ? AND id_usuario = ?",
+      [titulo, descricao, valor, guardado, dataPrevista, id, idUsuario]
+    );
+    res.json({ mensagem: "Meta atualizada" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.delete("/api/metas/:id", autenticar, async (req, res) => {
+  const { id } = req.params;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    await pooldb.query(
+      "DELETE FROM metas WHERE id = ? AND id_usuario = ?",
+      [id, idUsuario]
+    );
+    res.json({ mensagem: "Meta removida" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.post("/api/metas/:id/concluir", autenticar, async (req, res) => {
+  const { id } = req.params;
+  const idUsuario = req.session.usuario.id;
+
+  try {
+    await pooldb.query(
+      "UPDATE metas SET concluida = TRUE WHERE id = ? AND id_usuario = ?",
+      [id, idUsuario]
+    );
+    res.json({ mensagem: "Meta concluída" });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
 // ================== INICIAR SERVIDOR ==================
 const PORT = process.env.PORT;
 if (!PORT) {
