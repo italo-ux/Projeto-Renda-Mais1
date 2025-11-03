@@ -68,69 +68,17 @@
         </div>
         </div>
 
-        <button class="m-0 ">
-            <span class="button-text" onclick="window.location.href='adicionarMeta.html'">Adicionar nova Meta</span>
+        <button id="btn-adicionar-meta" class="btn btn-success w-100 mt-3" type="button">
+            <span class="button-text">Adicionar nova Meta</span>
         </button>
     </div>
   </header>
 <main>
     <div class="container mt-4 mb-5">
+        <h1 class="text-center mb-4">Minhas metas</h1>
         <div id="metasContainer" class="row g-4">
-             <h1 class="text-center">Minhas metas</h1>
-            <div class="col-4" >
-               
-                <div class="card card-meta h-100 shadow border-0">
-                    <div class="card-body d-flex flex-column position-relative">
-                      <!-- dropdown pontilhado no canto superior direito -->
-                      <div class="position-absolute top-0 end-0 m-2">
-                        <div class="dropdown">
-                          <button class="btn btn-dots-lg" type="button" id="metaMenuBtn-1" data-bs-toggle="dropdown" aria-expanded="false" data-id="1" aria-label="Menu da meta">
-                            <i class="bi bi-three-dots-vertical"></i>
-                          </button>
-                          <div class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="metaMenuBtn-1">
-                            <button class="btn dropdown-item action-concluir w-100 mb-1" data-id="1" type="button">Concluída</button>
-                            <button class="btn dropdown-item action-editar w-100 mb-1" data-id="1" type="button">Editar</button>
-                            <button class="btn dropdown-item action-remover w-100 text-danger" data-id="1" type="button">Remover</button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <h5 class="card-title">Meta Exemplo</h5>
-                      <p class="card-text" id="guardado-meta"> R$ 188,00</p>
-                      <p class="card-text text-left">Descrição da meta exemplo.</p>
-
-                      <div class="text-center mt-auto">
-                        <p class="card-text">Data de conclusão: <span id="dataConclusao">01/01/2023</span></p>
-                      </div>
-
-                      <hr>
-                      <div class="d-flex gap-2 mt-2">
-                
-                      </div>
-                    </div>
-                </div>
-            </div>
-             <div class="col-4">
-                <div class="card h-100 shadow border-0">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">Meta Exemplo</h5>
-                        <p class="card-text">Descrição da meta exemplo.</p>
-
-                    </div>
-                </div>
-            </div>
-             <div class="col-4">
-                <div class="card h-100 shadow border-0">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">Meta Exemplo</h5>
-                        <p class="card-text">Descrição da meta exemplo.</p>
-                    </div>
-                </div>
-            </div>
-            
-            
-            <!-- As metas serão adicionadas aqui dinamicamente -->
-        </div>
+             <!-- Metas serão adicionadas aqui dinamicamente -->
+         </div>
     </div>
 
 </main>
@@ -177,8 +125,43 @@
   </div>
 </div>
 
-
-
+<!-- Adicione este modal -->
+<div class="modal fade" id="addMetaModal" tabindex="-1" aria-labelledby="addMetaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addMetaModalLabel">Adicionar Meta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Título</label>
+          <input id="metaTitulo" class="form-control" type="text" placeholder="Ex: Viagem" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Descrição</label>
+          <textarea id="metaDescricao" class="form-control" rows="2" placeholder="Descrição opcional"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Valor da meta (R$)</label>
+          <input id="metaValor" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Já guardado (R$)</label>
+          <input id="metaGuardado" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Data prevista</label>
+          <input id="metaData" class="form-control" type="date" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="addMetaCancel" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button id="addMetaSave" type="button" class="btn btn-success">Adicionar Meta</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="script.js"></script>
 
