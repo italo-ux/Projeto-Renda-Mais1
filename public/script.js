@@ -642,79 +642,83 @@ if (visitaData.primeiraVisita) {
   }
 
   function setupAddMetaFlow() {
-    const btnAddMeta = document.getElementById('btn-adicionar-meta');
-    const modalEl = document.getElementById('addMetaModal');
-    
-    if (!btnAddMeta) {
-      console.error('Botão de adicionar meta não encontrado');
-      return;
-    }
+    // Aguardar DOMContentLoaded e Bootstrap
+    document.addEventListener('DOMContentLoaded', () => {
+      const btnAddMeta = document.getElementById('btn-adicionar-meta');
+      const modalEl = document.getElementById('addMetaModal');
+      
+      if (!btnAddMeta || !modalEl) {
+        console.error('Elementos do modal não encontrados');
+        return;
+      }
 
-    if (!modalEl) {
-      console.error('Modal de adicionar meta não encontrado');
-      return;
-    }
+      // Criar instância do modal uma única vez
+      const modal = new bootstrap.Modal(modalEl);
 
-    const modal = new bootstrap.Modal(modalEl);
-
-    btnAddMeta.addEventListener('click', () => {
-      console.log('Abrindo modal...');
-      modal.show();
-    });
-
-    const btnSave = document.getElementById('addMetaSave');
-    if (btnSave) {
-      btnSave.addEventListener('click', async () => {
-        const titulo = document.getElementById('metaTitulo')?.value?.trim();
-        const descricao = document.getElementById('metaDescricao')?.value?.trim();
-        const valor = parseFloat(document.getElementById('metaValor')?.value) || 0;
-        const guardado = parseFloat(document.getElementById('metaGuardado')?.value) || 0;
-        const dataPrevista = document.getElementById('metaData')?.value;
-
-        if (!titulo) {
-          alert('Por favor, informe o título da meta');
-          return;
-        }
-
+      // Listener do botão
+      btnAddMeta.addEventListener('click', () => {
         try {
-          const resp = await fetch('/api/metas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              titulo,
-              descricao,
-              valor,
-              guardado,
-              dataPrevista
-            })
-          });
-
-          if (!resp.ok) {
-            const data = await resp.json();
-            throw new Error(data.erro || 'Erro ao salvar meta');
-          }
-
-          // Limpar campos
-          document.getElementById('metaTitulo').value = '';
-          document.getElementById('metaDescricao').value = '';
-          document.getElementById('metaValor').value = '';
-          document.getElementById('metaGuardado').value = '';
-          document.getElementById('metaData').value = '';
-
-          // Fechar modal
-          const modal = bootstrap.Modal.getInstance(modalEl);
-          if (modal) modal.hide();
-
-          // Recarregar metas
-          await pegarMetas();
-
+          modal.show();
         } catch (err) {
-          console.error('Erro ao salvar meta:', err);
-          alert(err.message || 'Erro ao salvar meta');
+          console.error('Erro ao abrir modal:', err);
         }
       });
-    }
+
+      // Listener do salvar
+      const btnSave = document.getElementById('addMetaSave');
+      if (btnSave) {
+        btnSave.addEventListener('click', async () => {
+          const titulo = document.getElementById('metaTitulo')?.value?.trim();
+          const descricao = document.getElementById('metaDescricao')?.value?.trim();
+          const valor = parseFloat(document.getElementById('metaValor')?.value) || 0;
+          const guardado = parseFloat(document.getElementById('metaGuardado')?.value) || 0;
+          const dataPrevista = document.getElementById('metaData')?.value;
+
+          if (!titulo) {
+            alert('Por favor, informe o título da meta');
+            return;
+          }
+
+          try {
+            const resp = await fetch('/api/metas', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                titulo,
+                descricao,
+                valor,
+                guardado,
+                dataPrevista
+              })
+            });
+
+            if (!resp.ok) {
+              const data = await resp.json();
+              throw new Error(data.erro || 'Erro ao salvar meta');
+            }
+
+            // Limpar campos
+            document.getElementById('metaTitulo').value = '';
+            document.getElementById('metaDescricao').value = '';
+            document.getElementById('metaValor').value = '';
+            document.getElementById('metaGuardado').value = '';
+            document.getElementById('metaData').value = '';
+
+            // Fechar modal
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            // Recarregar metas
+            await pegarMetas();
+
+          } catch (err) {
+            console.error('Erro ao salvar meta:', err);
+            alert(err.message || 'Erro ao salvar meta');
+          }
+        });
+      }
+    });
   }
 
   // pequeno helper para escapar texto em innerHTML
