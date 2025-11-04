@@ -641,84 +641,86 @@ if (visitaData.primeiraVisita) {
     refreshMetaCounters();
   }
 
+  // ================================
+  //  🌟 CORREÇÃO ESTÁ AQUI 🌟
+  // ================================
   function setupAddMetaFlow() {
-    // Aguardar DOMContentLoaded e Bootstrap
-    document.addEventListener('DOMContentLoaded', () => {
-      const btnAddMeta = document.getElementById('btn-adicionar-meta');
-      const modalEl = document.getElementById('addMetaModal');
-      
-      if (!btnAddMeta || !modalEl) {
-        console.error('Elementos do modal não encontrados');
-        return;
-      }
+    // O 'DOMContentLoaded' aninhado foi REMOVIDO daqui.
 
-      // Criar instância do modal uma única vez
-      const modal = new bootstrap.Modal(modalEl);
+    const btnAddMeta = document.getElementById('btn-adicionar-meta');
+    const modalEl = document.getElementById('addMetaModal');
+    
+    if (!btnAddMeta || !modalEl) {
+      // Não exibe erro se os elementos não existirem (ex: estar na pagina usuario.html)
+      return;
+    }
 
-      // Listener do botão
-      btnAddMeta.addEventListener('click', () => {
-        try {
-          modal.show();
-        } catch (err) {
-          console.error('Erro ao abrir modal:', err);
-        }
-      });
+    // Criar instância do modal uma única vez
+    const modal = new bootstrap.Modal(modalEl);
 
-      // Listener do salvar
-      const btnSave = document.getElementById('addMetaSave');
-      if (btnSave) {
-        btnSave.addEventListener('click', async () => {
-          const titulo = document.getElementById('metaTitulo')?.value?.trim();
-          const descricao = document.getElementById('metaDescricao')?.value?.trim();
-          const valor = parseFloat(document.getElementById('metaValor')?.value) || 0;
-          const guardado = parseFloat(document.getElementById('metaGuardado')?.value) || 0;
-          const dataPrevista = document.getElementById('metaData')?.value;
-
-          if (!titulo) {
-            alert('Por favor, informe o título da meta');
-            return;
-          }
-
-          try {
-            const resp = await fetch('/api/metas', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({
-                titulo,
-                descricao,
-                valor,
-                guardado,
-                dataPrevista
-              })
-            });
-
-            if (!resp.ok) {
-              const data = await resp.json();
-              throw new Error(data.erro || 'Erro ao salvar meta');
-            }
-
-            // Limpar campos
-            document.getElementById('metaTitulo').value = '';
-            document.getElementById('metaDescricao').value = '';
-            document.getElementById('metaValor').value = '';
-            document.getElementById('metaGuardado').value = '';
-            document.getElementById('metaData').value = '';
-
-            // Fechar modal
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-
-            // Recarregar metas
-            await pegarMetas();
-
-          } catch (err) {
-            console.error('Erro ao salvar meta:', err);
-            alert(err.message || 'Erro ao salvar meta');
-          }
-        });
+    // Listener do botão
+    btnAddMeta.addEventListener('click', () => {
+      try {
+        modal.show();
+      } catch (err) {
+        console.error('Erro ao abrir modal:', err);
       }
     });
+
+    // Listener do salvar
+    const btnSave = document.getElementById('addMetaSave');
+    if (btnSave) {
+      btnSave.addEventListener('click', async () => {
+        const titulo = document.getElementById('metaTitulo')?.value?.trim();
+        const descricao = document.getElementById('metaDescricao')?.value?.trim();
+        const valor = parseFloat(document.getElementById('metaValor')?.value) || 0;
+        const guardado = parseFloat(document.getElementById('metaGuardado')?.value) || 0;
+        const dataPrevista = document.getElementById('metaData')?.value;
+
+        if (!titulo) {
+          alert('Por favor, informe o título da meta');
+          return;
+        }
+
+        try {
+          const resp = await fetch('/api/metas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              titulo,
+              descricao,
+              valor,
+              guardado,
+              dataPrevista
+            })
+          });
+
+          if (!resp.ok) {
+            const data = await resp.json();
+            throw new Error(data.erro || 'Erro ao salvar meta');
+          }
+
+          // Limpar campos
+          document.getElementById('metaTitulo').value = '';
+          document.getElementById('metaDescricao').value = '';
+          document.getElementById('metaValor').value = '';
+          document.getElementById('metaGuardado').value = '';
+          document.getElementById('metaData').value = '';
+
+          // Fechar modal
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+
+          // Recarregar metas
+          await pegarMetas();
+
+        } catch (err) {
+          console.error('Erro ao salvar meta:', err);
+          alert(err.message || 'Erro ao salvar meta');
+        }
+      });
+    }
   }
 
   // pequeno helper para escapar texto em innerHTML
@@ -726,15 +728,19 @@ if (visitaData.primeiraVisita) {
     if (!str) return '';
     return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;');
   }
-
-  // inicializa fluxo de adicionar metas (se estiver na página de metas)
-  if (document.getElementById('metasContainer')) {
-    setupAddMetaFlow();
+  
+  // Helper para formatar BRL (caso não exista)
+  function formatBRL(value) {
+    if (value == null) return 'R$ 0,00';
+    return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
+
 
   // Inicializa
   await pegarDespesas();
-  setupAddMetaFlow();
   await pegarMetas();
+  
+  // Chama as funções que dependem do DOM (agora sem o listener aninhado)
+  setupAddMetaFlow();
   setupDelegation();
 });
