@@ -1,6 +1,5 @@
 -- ===============================
 -- BANCO DE DADOS: railway
--- Compatível com app.js e script do front
 -- ===============================
 
 DROP DATABASE IF EXISTS railway;
@@ -17,8 +16,9 @@ CREATE TABLE usuarios (
     senha VARCHAR(255) NOT NULL,
     metaMensal DECIMAL(10,2) DEFAULT NULL,
     rendaMensal DECIMAL(10,2) DEFAULT NULL,
-    primeira_visita BOOLEAN DEFAULT TRUE, -- NOVA COLUNA
+    primeira_visita BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    dinheiroGuardado DECIMAL(10, 2) DEFAULT 0.00
 );
 
 -- ===============================

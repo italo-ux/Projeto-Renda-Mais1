@@ -73,7 +73,7 @@
                 <div class="saldo-card text-center">
                   <h4>Dinheiro Guardado</h4>
                   <p class="valor">R$ 200,00</p>
-                  <button class="button button-detalhes" data-bs-toggle="modal">Depositar</button>
+                 <button id="btn-depositar-guardado" class="btn btn-warning">Depositar Dinheiro</button>
                 </div>
 
                 <div id="cardConfirmado" class="d-none">
@@ -327,7 +327,28 @@
     </div>
   </div>
 
-
+  <!-- Modal depositar dinheiro guardado -->
+<div class="modal fade" id="guardarDinheiroModal" tabindex="-1" aria-labelledby="guardarDinheiroModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="guardarDinheiroModalLabel">Dinheiro Guardado 💰</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="valorGuardar" class="form-label">Quanto de dinheiro você pretende guardar?</label>
+                    <input type="number" class="form-control" id="valorGuardar" step="0.01" min="0" placeholder="Ex: 100.00">
+                    <div class="form-text">O valor será **subtraído** do seu Saldo atual.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnSalvarGuardado">Guardar Dinheiro</button>
+            </div>
+        </div>
+    </div>
+</div>
   <!-- Rodapé -->
   <footer>
     <div class="container">
