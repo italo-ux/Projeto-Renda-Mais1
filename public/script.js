@@ -301,7 +301,7 @@ if (visitaData.primeiraVisita) {
           const card = document.createElement("div");
           card.className = "col";
           card.innerHTML = `
-            <div class="conta p-1 text-left card shadow border-0 rounded-4 h-50 ${d.pago ? 'bg-light' : ''}">
+            <div class="conta p-1 text-left card shadow border-0 rounded-4 h-100 ${d.pago ? 'bg-light' : ''}">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
                   <div>
@@ -322,6 +322,7 @@ if (visitaData.primeiraVisita) {
                         Excluir
                       </button>
                   </div>
+                  </div>
                 </div>
               </div>
             </div>`;
