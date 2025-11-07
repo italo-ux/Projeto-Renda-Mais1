@@ -159,7 +159,7 @@
   header {
     background: linear-gradient(to right, var(--vescuro), var(--vclaro));
     color: white;
-    padding: 3em;
+    padding: 2em;
   }
 
   header h1 {
@@ -246,5 +246,12 @@
   min-width: 180px;
   z-index: 2000;
 }
-
+@media (max-width: 768px) {
+ .imagens-metas img{
+  display: none;
+ }
+ #img-rio img, #img-formando img, #img-crianca img{
+  display: none;
+ }
+}
     

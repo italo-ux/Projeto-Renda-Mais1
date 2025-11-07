@@ -725,28 +725,25 @@
   #usuario-name{
     color: rgb(20, 20, 20);
   }
-  /* Centralizar título "Página Inicial do Renda+" na navbar */
   .navbar {
     position: fixed;
   }
 
-  /* centraliza horizontal e verticalmente sem bloquear botões */
   .navbar-center {
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     white-space: nowrap;
-    pointer-events: none; /* permite clicar no toggler/brand normalmente */
+    pointer-events: none;
     text-align: center;
     width: auto;
   }
 
-  /* permite selecionar/ler o texto do H1 sem interferir nos botões */
   .navbar-center h1 {
     margin: 0;
     pointer-events: auto;
-    font-size: 1.1rem; /* ajuste conforme necessidade */
+    font-size: 1.1rem; 
   }
   .metas{
     padding: 2rem;
@@ -774,17 +771,20 @@
   }
 
 
-  /* ajuste para telas pequenas para evitar sobreposição com o botão hamburger */
+  
   @media (max-width: 767.98px) {
     .navbar-center {
-      padding: 0 3.5rem; /* cria espaço lateral para o toggler */
-      transform: translateX(-50%); /* vertical centralização controlada pela altura da navbar */
+      padding: 0 3.5rem; 
+      transform: translateX(-50%);
       top: 50%;
     }
     .navbar-center h1 { font-size: 1rem; }
   }
 
   @media (max-width: 768px) {
+    .imagens-metas {
+    display: none;
+  }
     .navbar {
       flex-direction: column;
       align-items: flex-start;
@@ -895,12 +895,7 @@
     display: none;
   }
   }
-  /* ============================= */
-  /* FIM DO CSS */
-  /* ============================= */
 
-
-/* make navbar action buttons smaller and aligned */
 .navbar .btn.btn-sm {
   padding: 0.25rem 0.5rem;
   font-size: 0.85rem;
@@ -908,8 +903,8 @@
   border-width: 1px;
 }
 
-/* mobile: stack and full-width inside collapsed menu for easier tap */
-@media (max-width: 767.98px) {
+
+@media (max-width: 768px) {
   .navbar-collapse .nav-item { width: 100%; display: flex; justify-content: center; padding: 0.25rem 0; }
   .navbar-collapse .btn { width: 90%; max-width: 320px; }
 }
