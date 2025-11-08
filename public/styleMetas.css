@@ -1,8 +1,6 @@
 @import url(https://fonts.bunny.net/css?family=poppins:100,300,500,600,700);
 
-  /* ============================= */
   /*  VARIÁVEIS GLOBAIS */
-  /* ============================= */
   :root {
     --vescuro: #235321;
     --vescuro2: #143013;
@@ -12,9 +10,7 @@
     --rojo: #bc4749;
   }
 
-  /* ============================= */
   /*  ESTILOS GERAIS */
-  /* ============================= */
   body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--bege);
@@ -39,9 +35,7 @@
     font-size: 2em;
   }
 
-  /* ============================= */
   /*  COMPONENTES BÁSICOS */
-  /* ============================= */
   button {
     background-color: white;
     border: 3px solid var(--vclaro);
@@ -78,9 +72,8 @@
     margin-bottom: 1em;
   }
 
-  /* ============================= */
   /*  NAVBAR */
-  /* ============================= */
+  
   .navbar {
     background-color: white;
     width: 100%;
@@ -205,13 +198,13 @@
     background-color: #e0ffce;
 }
 
-/* botão "três pontos" maior */
+
 .btn-dots-lg {
   background: transparent;
   border: 0;
   color: #333;
   padding: 0.35rem 0.45rem;
-  font-size: 1.35rem; /* ícone maior */
+  font-size: 1.35rem;
   line-height: 1;
   border-radius: 6px;
   display: inline-flex;
@@ -219,7 +212,7 @@
   justify-content: center;
 }
 
-/* hover/focus visual */
+
 .btn-dots-lg:hover,
 .btn-dots-lg:focus {
   background: rgba(0,0,0,0.04);
@@ -227,7 +220,6 @@
 }
 
 
-/* dropdown menu: botões ocupando toda largura, sem li's */
 .dropdown-menu .dropdown-item.btn {
   display: block;
   width: 100%;
@@ -236,12 +228,10 @@
   border-radius: 6px;
 }
 
-/* separar visual entre opções (opcional) */
 .dropdown-menu .dropdown-item.mb-1 {
   margin-bottom: 0.25rem;
 }
 
-/* garantir que o dropdown fique acima de outros elementos */
 .dropdown-menu {
   min-width: 180px;
   z-index: 2000;

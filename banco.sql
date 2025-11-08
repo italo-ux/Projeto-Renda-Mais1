@@ -1,14 +1,10 @@
--- ===============================
--- BANCO DE DADOS: railway
--- ===============================
 
 DROP DATABASE IF EXISTS railway;
 CREATE DATABASE railway;
 USE railway;
 
--- ===============================
 -- TABELA DE USUÁRIOS
--- ===============================
+
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -21,9 +17,7 @@ CREATE TABLE usuarios (
     dinheiroGuardado DECIMAL(10, 2) DEFAULT 0.00
 );
 
--- ===============================
 -- TABELA DE DESPESAS
--- ===============================
 CREATE TABLE despesas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
