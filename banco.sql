@@ -17,7 +17,7 @@ CREATE TABLE usuarios (
     metaMensal DECIMAL(10,2) DEFAULT NULL,
     rendaMensal DECIMAL(10,2) DEFAULT NULL,
     primeira_visita BOOLEAN DEFAULT TRUE,
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dinheiroGuardado DECIMAL(10, 2) DEFAULT 0.00
 );
 
