@@ -215,6 +215,39 @@ app.post("/api/atualizar-config", autenticar, async (req, res) => {
 });
 // ==============================================================================
 
+// Rota específica para atualizar apenas o dinheiro guardado (compatível com frontend)
+app.post("/api/guardado", autenticar, async (req, res) => {
+	const { guardado } = req.body;
+	const idUsuario = req.session.usuario.id;
+
+	if (guardado === undefined || guardado === null) {
+		return res.status(400).json({ erro: "Campo 'guardado' é obrigatório" });
+	}
+
+	try {
+		await pooldb.query(
+			"UPDATE usuarios SET dinheiroGuardado = ? WHERE id = ?",
+			[guardado, idUsuario]
+		);
+
+		// Recupera dados atualizados e atualiza a sessão
+		const [rows] = await pooldb.query(
+			"SELECT id, nome, email, rendaMensal, metaMensal, dinheiroGuardado, primeira_visita FROM usuarios WHERE id = ?",
+			[idUsuario]
+		);
+
+		if (rows.length > 0) {
+			req.session.usuario = rows[0];
+			return res.json({ mensagem: "Valor guardado atualizado com sucesso", guardado: rows[0].dinheiroGuardado });
+		}
+
+		res.status(404).json({ erro: "Usuário não encontrado" });
+	} catch (err) {
+		console.error("Erro ao atualizar guardado:", err);
+		res.status(500).json({ erro: err.message });
+	}
+});
+
 
 app.post("/api/despesas", autenticar, async (req, res) => {
   const { descricao, valor, categoria, data } = req.body;
@@ -418,4 +451,20 @@ if (!PORT) {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   importarBanco();
+});
+
+// Rota para obter o valor guardado atual do usuário
+app.get("/api/guardado", autenticar, async (req, res) => {
+	const idUsuario = req.session.usuario.id;
+	try {
+		const [rows] = await pooldb.query(
+			"SELECT dinheiroGuardado FROM usuarios WHERE id = ?",
+			[idUsuario]
+		);
+		if (!rows.length) return res.status(404).json({ erro: "Usuário não encontrado" });
+		return res.json({ guardado: rows[0].dinheiroGuardado || 0 });
+	} catch (err) {
+		console.error("Erro ao obter guardado:", err);
+		res.status(500).json({ erro: err.message });
+	}
 });

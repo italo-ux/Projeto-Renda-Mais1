@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let userId;
   let nomeUsuario;
   let rendaMensalLocal = null; // <-- nova variável que guarda a renda mensal do usuário
+  let savedMoneyLocal = 0; // valor guardado (dinheiro separado)
 
   // ================================
   // 🧾 Cadastro de usuário
@@ -104,6 +105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     nomeUsuario = sessaoData.nome;
     // guarda a renda vinda do backend (se estiver presente na resposta da sessão)
     if (sessaoData.rendaMensal != null) rendaMensalLocal = Number(sessaoData.rendaMensal);
+    // tenta obter valor guardado vindo do backend (se existir)
+    if (sessaoData.guardado != null) savedMoneyLocal = Number(sessaoData.guardado) || 0;
     const usuarioNameEl = document.getElementById('usuario-name');
     if (usuarioNameEl) usuarioNameEl.innerHTML = nomeUsuario;
 
@@ -388,12 +391,17 @@ if (visitaData.primeiraVisita) {
 
         // Calcula saldo = rendaMensal - apenas despesas PAGAS
         const saldoCalc = (rendaMensalLocal != null) ? (rendaMensalLocal - totalPago) : (0 - totalPago);
-        const saldoText = saldoCalc.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        // Subtrai o valor guardado (dinheiro separado)
+        const saldoAposGuardado = saldoCalc - (Number(savedMoneyLocal) || 0);
+        const saldoText = saldoAposGuardado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
         // Atualiza elementos de saldo
         document.querySelectorAll('#Saldo').forEach(el => { 
           el.innerText = saldoText;
         });
+
+        // Atualiza valor guardado na UI
+        updateSavedUI();
       }
     } catch (error) {
       console.error("Erro ao pegar despesas:", error);
@@ -787,8 +795,105 @@ if (visitaData.primeiraVisita) {
     return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
+  // Helper para parsear string BRL para número (ex: "R$ 1.234,56" -> 1234.56)
+  function parseBRL(str) {
+    if (!str) return 0;
+    try {
+      return Number(String(str).replace(/[R$\s\.]/g, '').replace(',', '.')) || 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Atualiza o elemento que mostra o valor guardado
+  function updateSavedUI() {
+    const el = document.getElementById('valorGuardado');
+    if (el) el.innerText = formatBRL(savedMoneyLocal || 0);
+  }
+
+  // Persiste localmente (localStorage) para manter entre reloads
+  function persistSavedLocally() {
+    try {
+      const key = userId ? `guardado_user_${userId}` : 'guardado_guest';
+      localStorage.setItem(key, String(savedMoneyLocal || 0));
+    } catch (e) { console.warn('Não foi possível salvar localmente:', e); }
+  }
+
+  // Tenta enviar para backend (rota hipotética). Se falhar, continuará com localStorage.
+  async function persistSavedBackend(value) {
+    try {
+      const resp = await fetch('/api/guardado', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guardado: value })
+      });
+      if (resp.ok) {
+        const data = await resp.json().catch(()=>({}));
+        // se backend retornar valor, use-o
+        if (data.guardado != null) {
+          savedMoneyLocal = Number(data.guardado) || savedMoneyLocal;
+        }
+      }
+    } catch (e) {
+      // ok — rota pode não existir
+      console.warn('Não foi possível persistir guardado no backend:', e);
+    }
+  }
+
+  // Carrega valor guardado de localStorage (fallback se backend não fornecer)
+  function loadSavedLocalFallback() {
+    try {
+      const key = userId ? `guardado_user_${userId}` : 'guardado_guest';
+      const v = localStorage.getItem(key);
+      if (v != null) savedMoneyLocal = Number(v) || 0;
+    } catch (e) { /* ignore */ }
+    updateSavedUI();
+  }
+
+  // Listener para o botão de salvar guardado
+  const btnSalvarGuardado = document.getElementById('btnSalvarGuardado');
+  if (btnSalvarGuardado) {
+    btnSalvarGuardado.addEventListener('click', async () => {
+      const input = document.getElementById('valorGuardar');
+      if (!input) return;
+      const valor = parseFloat(input.value);
+      if (!valor || isNaN(valor) || valor <= 0) {
+        alert('Informe um valor válido maior que zero');
+        return;
+      }
+
+      // Verifica saldo atual na tela
+      const saldoEl = document.querySelector('#Saldo');
+      const saldoAtual = parseBRL(saldoEl?.innerText || 'R$ 0,00');
+      if (valor > saldoAtual) {
+        if (!confirm('O valor informado é maior que o saldo disponível. Deseja prosseguir e deixar o saldo negativo?')) return;
+      }
+
+      // Aplica localmente de imediato
+      savedMoneyLocal = (Number(savedMoneyLocal) || 0) + valor;
+      updateSavedUI();
+      persistSavedLocally();
+
+      // Ajusta saldo mostrado imediatamente (subtrai o valor)
+      document.querySelectorAll('#Saldo').forEach(el => {
+        const current = parseBRL(el.innerText || 'R$ 0,00');
+        el.innerText = formatBRL(current - valor);
+      });
+
+      // Fecha modal
+      try { bootstrap.Modal.getInstance(document.getElementById('guardarDinheiroModal'))?.hide(); } catch (e) {}
+
+      // Tenta persistir no backend sem bloquear a UX
+      persistSavedBackend(savedMoneyLocal).catch(()=>{});
+    });
+  }
+
 
   // Inicializa
+  // Carrega guardado do localStorage caso backend não tenha enviado
+  loadSavedLocalFallback();
+
   await pegarDespesas();
   await pegarMetas();
   
