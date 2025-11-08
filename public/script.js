@@ -294,7 +294,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   //  INICIALIZAÇÃO 
-  loadSavedLocalFallback();
+  //loadSavedLocalFallback();
   await pegarDespesas();
   await pegarMetas();
   setupAddMetaFlow();
