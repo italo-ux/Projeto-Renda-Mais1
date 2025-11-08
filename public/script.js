@@ -819,76 +819,70 @@ if (visitaData.primeiraVisita) {
     } catch (e) { console.warn('Não foi possível salvar localmente:', e); }
   }
 
-  // Tenta enviar para backend (rota hipotética). Se falhar, continuará com localStorage.
-  async function persistSavedBackend(value) {
-    try {
-      const resp = await fetch('/api/guardado', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guardado: value })
-      });
-      if (resp.ok) {
-        const data = await resp.json().catch(()=>({}));
-        // se backend retornar valor, use-o
-        if (data.guardado != null) {
-          savedMoneyLocal = Number(data.guardado) || savedMoneyLocal;
-        }
-      }
-    } catch (e) {
-      // ok — rota pode não existir
-      console.warn('Não foi possível persistir guardado no backend:', e);
-    }
-  }
+// Função para persistir no backend
+async function persistSavedBackend(value) {
+    try {
+        const resp = await fetch('/api/guardado', {
+            method: 'POST',
+            credentials: 'include', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guardado: value })
+        });
 
-  // Carrega valor guardado de localStorage (fallback se backend não fornecer)
-  function loadSavedLocalFallback() {
-    try {
-      const key = userId ? `guardado_user_${userId}` : 'guardado_guest';
-      const v = localStorage.getItem(key);
-      if (v != null) savedMoneyLocal = Number(v) || 0;
-    } catch (e) { /* ignore */ }
-    updateSavedUI();
-  }
+        if (!resp.ok) {
+            throw new Error('Falha ao salvar no servidor');
+        }
 
-  // Listener para o botão de salvar guardado
-  const btnSalvarGuardado = document.getElementById('btnSalvarGuardado');
-  if (btnSalvarGuardado) {
-    btnSalvarGuardado.addEventListener('click', async () => {
-      const input = document.getElementById('valorGuardar');
-      if (!input) return;
-      const valor = parseFloat(input.value);
-      if (!valor || isNaN(valor) || valor <= 0) {
-        alert('Informe um valor válido maior que zero');
-        return;
-      }
+        const data = await resp.json();
+        // Atualiza valor local com confirmação do backend
+        savedMoneyLocal = Number(data.guardado) || 0;
+        return true;
+    } catch (err) {
+        console.error('Erro ao salvar no servidor:', err);
+        return false;
+    }
+}
 
-      // Verifica saldo atual na tela
-      const saldoEl = document.querySelector('#Saldo');
-      const saldoAtual = parseBRL(saldoEl?.innerText || 'R$ 0,00');
-      if (valor > saldoAtual) {
-        if (!confirm('O valor informado é maior que o saldo disponível. Deseja prosseguir e deixar o saldo negativo?')) return;
-      }
+// Listener para o botão de salvar guardado
+const btnSalvarGuardado = document.getElementById('btnSalvarGuardado');
+if (btnSalvarGuardado) {
+    btnSalvarGuardado.addEventListener('click', async () => {
+        const input = document.getElementById('valorGuardar');
+        if (!input) return;
+        
+        const valor = parseFloat(input.value);
+        if (!valor || isNaN(valor) || valor <= 0) {
+            alert('Informe um valor válido maior que zero');
+            return;
+        }
 
-      // Aplica localmente de imediato
-      savedMoneyLocal = (Number(savedMoneyLocal) || 0) + valor;
-      updateSavedUI();
-      persistSavedLocally();
-
-      // Ajusta saldo mostrado imediatamente (subtrai o valor)
-      document.querySelectorAll('#Saldo').forEach(el => {
-        const current = parseBRL(el.innerText || 'R$ 0,00');
-        el.innerText = formatBRL(current - valor);
-      });
-
-      // Fecha modal
-      try { bootstrap.Modal.getInstance(document.getElementById('guardarDinheiroModal'))?.hide(); } catch (e) {}
-
-      // Tenta persistir no backend sem bloquear a UX
-      persistSavedBackend(savedMoneyLocal).catch(()=>{});
-    });
-  }
-
+        try {
+            // Soma ao valor atual
+            const novoTotal = (Number(savedMoneyLocal) || 0) + valor;
+            
+            // Tenta salvar no backend primeiro
+            const salvouNoBackend = await persistSavedBackend(novoTotal);
+            
+            if (salvouNoBackend) {
+                // Atualiza UI
+                updateSavedUI();
+                // Fecha modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('guardarDinheiroModal'));
+                if (modal) modal.hide();
+                
+                // Limpa input
+                input.value = '';
+                
+                // Atualiza saldo
+                await pegarDespesas();
+            } else {
+                throw new Error('Não foi possível salvar no servidor');
+            }
+        } catch (err) {
+            alert('Erro ao guardar dinheiro: ' + err.message);
+        }
+    });
+}
 
   // Inicializa
   // Carrega guardado do localStorage caso backend não tenha enviado
