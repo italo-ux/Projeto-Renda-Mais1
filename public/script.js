@@ -301,34 +301,34 @@ if (visitaData.primeiraVisita) {
             }
           }
 
-          const card = document.createElement("div");
-          card.className = "col";
-          card.innerHTML = `
-            <div class="conta p-1 text-left card shadow border-0 rounded-4 h-100 ${d.pago ? 'bg-light' : ''}">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
-                  <div>
-                    <h5>${d.descricao}</h5>
-                    <small>${d.data ? new Date(d.data).toLocaleDateString("pt-BR") : '-'}</small>
-                  </div>
-                  <div class="text-end">
-                    <div class="fw-bold">${valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
-                    <div>${d.categoria || ''}</div>
-                    <div class="btn-group mt-2">
-                      <button class="btn btn-sm ${d.pago ? 'btn-success' : 'btn-outline-success'} btn-pagar" data-id="${d.id}">
-                        ${d.pago ? 'Pago ✓' : 'Pagar'}
-                      </button>
-                      <button class="btn btn-sm btn-outline-primary btn-editar" data-id="${d.id}" ${d.pago ? 'disabled' : ''}>
-                        Editar
-                      </button>
-                      <button class="btn btn-sm btn-outline-danger btn-excluir" data-id="${d.id}">
-                        Excluir
-                      </button>
-                  </div>
+           const card = document.createElement("div");
+          card.className = "col";
+          card.innerHTML = `
+            <div class="conta p-1 text-left card shadow border-0 rounded-4 h-100 ${d.pago ? 'bg-light' : ''}">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
+                  <div>
+                    <h5>${d.descricao}</h5>
+                    <small>${d.data ? new Date(d.data).toLocaleDateString("pt-BR") : '-'}</small>
                   </div>
-                </div>
-              </div>
-            </div>`;
+                  <div class="text-end">
+                    <div class="fw-bold">${valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                    <div>${d.categoria || ''}</div>
+                    <div class="btn-group mt-2">
+                      <button class="btn btn-sm ${d.pago ? 'btn-success' : 'btn-outline-success'} btn-pagar" data-id="${d.id}">
+                        ${d.pago ? 'Pago ✓' : 'Pagar'}
+                      </button>
+                      <button class="btn btn-sm btn-outline-primary btn-editar" data-id="${d.id}" ${d.pago ? 'disabled' : ''}>
+                        Editar
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger btn-excluir" data-id="${d.id}">
+                        Excluir
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>`;
 
           // Adicionar event listeners
           const btnPagar = card.querySelector('.btn-pagar');
