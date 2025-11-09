@@ -481,31 +481,59 @@ if (visitaData.primeiraVisita) {
       metas.forEach(m => {
         const isConcluida = Boolean(m.concluida);
         if (isConcluida) concluidas++; else pendentes++;
-        const col = document.createElement('div');
-        col.className = 'col-12 col-md-4';
-        col.innerHTML = `
-          <div class="card card-meta h-100 shadow border-0" data-id="${m.id}">
-            <div class="card-body d-flex flex-column position-relative">
-              <div class="position-absolute top-0 end-0 m-2">
-                <div class="dropdown">
-                  <button class="btn btn-dots-lg" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-id="${m.id}">
-                    <i class="bi bi-three-dots-vertical"></i>
-                  </button>
-                  <div class="dropdown-menu dropdown-menu-end p-2">
-                    <button class="btn dropdown-item action-concluir w-100 mb-1" data-id="${m.id}">${isConcluida ? 'Concluída' : 'Concluir'}</button>
-                    <button class="btn dropdown-item action-editar w-100 mb-1" data-id="${m.id}" type="button">Editar</button>
-                    <button class="btn dropdown-item action-remover w-100 text-danger" data-id="${m.id}" type="button">Remover</button>
-                  </div>
-                </div>
-              </div>
+      const col = document.createElement('div');
+col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-4';
 
-              <h5 class="card-title">${m.titulo}</h5>
-              <p class="card-text">${m.descricao || ''}</p>
-              <p class="mt-auto">Guardado: ${formatBRL(m.guardado)}</p>
-              <p>Meta: ${formatBRL(m.valor)}</p>
-            </div>
-          </div>
-        `;
+col.innerHTML = `
+  <div class="card card-meta h-100 shadow border-0" data-id="${m.id}">
+    <div class="card-body d-flex flex-column position-relative">
+
+      <!-- Botão de menu no canto superior direito -->
+      <div class="position-absolute top-0 end-0 m-2">
+        <div class="dropdown">
+          <button 
+            class="btn btn-dots-lg" 
+            type="button" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false" 
+            data-id="${m.id}">
+            <i class="bi bi-three-dots-vertical"></i>
+          </button>
+
+          <div class="dropdown-menu dropdown-menu-end p-2">
+            <button 
+              class="btn dropdown-item action-concluir w-100 mb-1" 
+              data-id="${m.id}">
+              ${isConcluida ? 'Concluída' : 'Concluir'}
+            </button>
+            <button 
+              class="btn dropdown-item action-editar w-100 mb-1" 
+              data-id="${m.id}" 
+              type="button">
+              Editar
+            </button>
+            <button 
+              class="btn dropdown-item action-remover w-100 text-danger" 
+              data-id="${m.id}" 
+              type="button">
+              Remover
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo principal -->
+      <h5 class="card-title mt-3">${m.titulo}</h5>
+      <p class="card-text">${m.descricao || ''}</p>
+      <p class="mt-auto">Guardado: ${formatBRL(m.guardado)}</p>
+      <p>Meta: ${formatBRL(m.valor)}</p>
+
+    </div>
+  </div>
+`;
+
+metasContainer.appendChild(col);
+
         metasContainer.appendChild(col);
       });
 
