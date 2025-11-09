@@ -196,46 +196,384 @@
   }
 .card-meta{
     background-color: #e0ffce;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fff7 100%);
+    box-shadow: 0 6px 18px rgba(18, 38, 18, 0.06);
+    transition: transform .18s ease, box-shadow .18s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    border: 0;
 }
 
 
+/* corpo do card com espaçamentos consistentes */
+.card-meta .card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* título / descrição */
+.card-meta .card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #163e16;
+}
+
+.card-meta .card-text {
+    color: #444;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+}
+
+/* informações de valor alinhadas ao final do card */
+.card-meta p.mt-auto {
+    margin-top: auto;
+    font-weight: 700;
+    color: #0f3b0f;
+    font-size: 0.98rem;
+}
+
+/* estilo do botão de três pontos */
 .btn-dots-lg {
-  background: transparent;
-  border: 0;
-  color: #333;
-  padding: 0.35rem 0.45rem;
-  font-size: 1.35rem;
-  line-height: 1;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+    background: transparent;
+    border: none;
+    color: #4b4b4b;
+    padding: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* dropdown menu leve */
+.card-meta .dropdown-menu {
+    min-width: 9rem;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(12, 40, 12, 0.08);
+}
+
+/* hover / foco */
+.card-meta:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 36px rgba(18, 38, 18, 0.12);
+}
+.card-meta:focus-within,
+.card-meta:focus {
+    outline: 3px solid rgba(45, 124, 45, 0.10);
+    outline-offset: 2px;
+}
+
+/* badges pequenas (guardado / meta) */
+.card-meta .badge-meta {
+    display: inline-block;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    background: #eef9ef;
+    color: #2d7c2d;
+    font-weight: 600;
+    font-size: .85rem;
+    margin-right: .5rem;
+}
+
+/* barra de progresso pequena (opcional, usada em metas) */
+.card-meta .progress-meta {
+    height: 8px;
+    background: #f1f1f1;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 0.6rem;
+}
+.card-meta .progress-meta > i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #2d7c2d, #66c266);
+    width: 50%; /* ajuste dinamicamente via JS se desejar */
+}
+
+/* layout responsivo do container de metas (garante colunas adaptáveis) */
+#metasContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* tamanhos para telas pequenas */
+@media (max-width: 767.98px) {
+    .card-meta {
+        min-height: unset;
+    }
+    .card-meta .card-body {
+        padding: 0.9rem;
+    }
+    .card-meta .card-title {
+        font-size: 1rem;
+    }
+    .card-meta p.mt-auto {
+        font-size: 0.95rem;
+    }
+}
+
+/* pequenas melhorias visuais nos itens do dropdown */
+.card-meta .dropdown-item {
+    font-size: .95rem;
+    padding: .45rem .6rem;
+}
+
+.navbar {
+    background-color: white;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+  }
+  .navbar button{
+    background-color: var(--vclaro);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 1em;
+    margin-left: 0.5em;
+    transition: all 0.3s ease;
+  }
+  
+  .conta button{
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: var(--vescuro);
+
+  }
+
+
+
+  .navbar img {
+    width: 3em;
+    height: auto;
+  }
+
+  .navbar a {
+    text-decoration: none;
+    color: #000;
+    font-weight: 600;
+    font-size: 1.1em;
+    padding-left: 2.3em;
+  }
+
+  .navbar a:hover {
+    color: var(--vclaro);
+    transition: all 0.3s ease;
+  }
+
+  .navbar button:hover {
+    background-color: var(--vclaro);
+    transition: all 0.3s ease;
+    
+  }
+
+  #inicio {
+    color: var(--vescuro);
+    font-weight: 700;
+  }
+  .navbar-center h1{
+    font-size: 2em;
+    font-weight: 700;
+    color: #212529
+  }
+  .circle{
+    width: 3em;
+    height: 3em;
+    background-color: var(--vclaro);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+
+  }
+
+
+  header {
+    background: linear-gradient(to right, var(--vescuro), var(--vclaro));
+    color: white;
+    padding: 2em;
+  }
+
+  header h1 {
+    font-size: 3.5em; 
+  }
+
+  header button {
+    font-size: 1.2em;
+    background-color: var(--vescuro);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 25px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.596);
+    transition: all 0.3s ease;
+  }
+
+  header button:hover {
+    background-color: var(--vclaro);
+  }
+
+  header .button-text {
+    color: white;
+  }
+  #saldoGuardado{
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--vclaro);
+  }
+  main{
+    background-color: white;
+    padding: 2em;
+    margin: 1em;
+  }
+  #guardado-meta{
+    font-size: 1.6rem;
+    font-weight:700;
+    color: var(--vescuro);
+    margin: 0;
+    padding: 0;
+  }
+.card-meta{
+    background-color: #e0ffce;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fff7 100%);
+    box-shadow: 0 6px 18px rgba(18, 38, 18, 0.06);
+    transition: transform .18s ease, box-shadow .18s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    border: 0;
 }
 
 
-.btn-dots-lg:hover,
-.btn-dots-lg:focus {
-  background: rgba(0,0,0,0.04);
-  outline: none;
+/* corpo do card com espaçamentos consistentes */
+.card-meta .card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-
-.dropdown-menu .dropdown-item.btn {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+/* título / descrição */
+.card-meta .card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #163e16;
 }
 
-.dropdown-menu .dropdown-item.mb-1 {
-  margin-bottom: 0.25rem;
+.card-meta .card-text {
+    color: #444;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
 }
 
-.dropdown-menu {
-  min-width: 180px;
-  z-index: 2000;
+/* informações de valor alinhadas ao final do card */
+.card-meta p.mt-auto {
+    margin-top: auto;
+    font-weight: 700;
+    color: #0f3b0f;
+    font-size: 0.98rem;
 }
+
+/* estilo do botão de três pontos */
+.btn-dots-lg {
+    background: transparent;
+    border: none;
+    color: #4b4b4b;
+    padding: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* dropdown menu leve */
+.card-meta .dropdown-menu {
+    min-width: 9rem;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(12, 40, 12, 0.08);
+}
+
+/* hover / foco */
+.card-meta:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 36px rgba(18, 38, 18, 0.12);
+}
+.card-meta:focus-within,
+.card-meta:focus {
+    outline: 3px solid rgba(45, 124, 45, 0.10);
+    outline-offset: 2px;
+}
+
+/* badges pequenas (guardado / meta) */
+.card-meta .badge-meta {
+    display: inline-block;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    background: #eef9ef;
+    color: #2d7c2d;
+    font-weight: 600;
+    font-size: .85rem;
+    margin-right: .5rem;
+}
+
+/* barra de progresso pequena (opcional, usada em metas) */
+.card-meta .progress-meta {
+    height: 8px;
+    background: #f1f1f1;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 0.6rem;
+}
+.card-meta .progress-meta > i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #2d7c2d, #66c266);
+    width: 50%; /* ajuste dinamicamente via JS se desejar */
+}
+
+/* layout responsivo do container de metas (garante colunas adaptáveis) */
+#metasContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* tamanhos para telas pequenas */
+@media (max-width: 767.98px) {
+    .card-meta {
+        min-height: unset;
+    }
+    .card-meta .card-body {
+        padding: 0.9rem;
+    }
+    .card-meta .card-title {
+        font-size: 1rem;
+    }
+    .card-meta p.mt-auto {
+        font-size: 0.95rem;
+    }
+}
+
+/* pequenas melhorias visuais nos itens do dropdown */
+.card-meta .dropdown-item {
+    font-size: .95rem;
+    padding: .45rem .6rem;
+}
+
 @media (max-width: 768px) {
  .imagens-metas img{
   display: none;
@@ -244,4 +582,4 @@
   display: none;
  }
 }
-    
+
