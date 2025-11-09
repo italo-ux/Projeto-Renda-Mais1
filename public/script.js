@@ -885,6 +885,9 @@ if (btnSalvarGuardado) {
 }
 
   // Inicializa
+function loadSavedLocalFallback() {
+  console.warn("loadSavedLocalFallback() não está implementada — ignorando...");
+}
 
   loadSavedLocalFallback();
   await pegarDespesas();
