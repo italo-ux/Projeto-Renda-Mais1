@@ -701,19 +701,24 @@ metasContainer.appendChild(col);
       return;
     }
 
-    const modal = new bootstrap.Modal(modalEl);
+    // pequeno log para depuração
+    console.log('setupAddMetaFlow: inicializando');
 
-    btnAddMeta.addEventListener('click', () => {
-      try {
-        modal.show();
-      } catch (err) {
-        console.error('Erro ao abrir modal:', err);
-      }
-    });
+    const modal = new bootstrap.Modal(modalEl);
+
+    btnAddMeta.addEventListener('click', () => {
+      try {
+        modal.show();
+        console.log('setupAddMetaFlow: modal de adicionar meta aberto');
+      } catch (err) {
+        console.error('Erro ao abrir modal:', err);
+      }
+    });
 
     const btnSave = document.getElementById('addMetaSave');
-    if (btnSave) {
-      btnSave.addEventListener('click', async () => {
+    if (btnSave) {
+      btnSave.addEventListener('click', async () => {
+        console.log('setupAddMetaFlow: clicado salvar meta');
         const titulo = document.getElementById('metaTitulo')?.value?.trim();
         const descricao = document.getElementById('metaDescricao')?.value?.trim();
         const valor = parseFloat(document.getElementById('metaValor')?.value) || 0;
@@ -796,6 +801,29 @@ metasContainer.appendChild(col);
     } catch (e) { console.warn('Não foi possível salvar localmente:', e); }
   }
 
+// Carrega fallback do localStorage caso o backend não esteja disponível
+function loadSavedLocalFallback() {
+  try {
+    // tenta key do usuário (se existir) ou a chave de guest
+    const userKey = userId ? `guardado_user_${userId}` : null;
+    let val = null;
+    if (userKey && localStorage.getItem(userKey) != null) {
+      val = localStorage.getItem(userKey);
+    } else if (localStorage.getItem('guardado_guest') != null) {
+      val = localStorage.getItem('guardado_guest');
+    }
+
+    if (val != null) {
+      savedMoneyLocal = Number(val) || 0;
+    }
+  } catch (e) {
+    console.warn('Erro ao carregar guardado do localStorage:', e);
+  }
+
+  // Atualiza UI mesmo que o valor seja 0
+  updateSavedUI();
+}
+
 // Função para persistir no backend
 async function persistSavedBackend(value) {
     try {
@@ -862,7 +890,6 @@ if (btnSalvarGuardado) {
   loadSavedLocalFallback();
   await pegarDespesas();
   await pegarMetas();
-
   setupAddMetaFlow();
   setupDelegation();
 });
