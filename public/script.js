@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // ================================
-  // 🗓️  Atualizar data e mês no topo (se existir)
-  // ================================
+  //  Atualizar data e mês no topo 
   const data = new Date();
   const mesEl = document.getElementById('mes');
   const dataEl = document.getElementById('data');
@@ -10,12 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let userId;
   let nomeUsuario;
-  let rendaMensalLocal = null; // <-- nova variável que guarda a renda mensal do usuário
-  let savedMoneyLocal = 0; // valor guardado (dinheiro separado)
+  let rendaMensalLocal = null; 
+  let savedMoneyLocal = 0; // valor guardado 
 
-  // ================================
-  // 🧾 Cadastro de usuário
-  // ================================
+  //  Cadastro de usuário
   const form = document.querySelector("form");
   if (form && form.id === "form-registro") {
     form.addEventListener("submit", async (e) => {
@@ -50,9 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
   
-// ================================
-  // 👤 Login de usuário
-  // ================================
+ 
+  //  Login de usuário
+  
   const loginForm = document.querySelector("#form-login");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -89,9 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-  // ================================
-  // 👤 Sessão do usuário logado
-  // ================================
+  //  Sessão do usuário logado
   try {
     const sessaoResp = await fetch("/api/usuario", { credentials: "include" });
     const sessaoData = await sessaoResp.json();
@@ -110,9 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const usuarioNameEl = document.getElementById('usuario-name');
     if (usuarioNameEl) usuarioNameEl.innerHTML = nomeUsuario;
 
-    // ================================
-    // 👋 Primeira visita
-    // ================================
+    //  Primeira visita
     const visitaResp = await fetch(`/api/primeira-visita`, { credentials: "include" });
 const visitaData = await visitaResp.json();
 
@@ -149,11 +141,9 @@ if (visitaData.primeiraVisita) {
           if (resp.ok) {
             // Atualiza a renda local
             rendaMensalLocal = parseFloat(rendaMensal);
-            
-            // Fecha o modal de forma segura
+           
             firstModal.hide();
             
-            // Remove o modal do DOM de forma segura
             const modalEl = document.getElementById('firstVisitModal');
             if (modalEl) {
               modalEl.addEventListener('hidden.bs.modal', () => {
@@ -161,7 +151,7 @@ if (visitaData.primeiraVisita) {
               });
             }
 
-            // Atualiza os valores na tela
+          
             await pegarDespesas();
           } else {
             throw new Error(data.erro || 'Erro ao salvar informações');
@@ -177,9 +167,8 @@ if (visitaData.primeiraVisita) {
     } catch (err) {
     console.error("Erro ao obter sessão do usuário:", err);
   }
-  // ================================
-  // ▶️ Controle botão "começar"
-  // ================================
+  
+  //  Controle botão "começar"
   const comecar = document.getElementById('comecar');
   const despesas = document.getElementById('formDespesa');
   const formulario = document.getElementById('formulario');
@@ -192,9 +181,7 @@ if (visitaData.primeiraVisita) {
     });
   }
 
-  // ================================
-  // 💸 Adicionar despesa
-  // ================================
+  //  Adicionar despesa
   const btnAdicionar = document.getElementById("btnAdicionar");
   if (btnAdicionar) {
     btnAdicionar.addEventListener("click", async () => {
@@ -238,7 +225,7 @@ if (visitaData.primeiraVisita) {
         btnAdicionar.textContent = "Adicionar Despesa";
         delete btnAdicionar.dataset.editando;
 
-        // Fecha modal
+      
         bootstrap.Modal.getInstance(document.getElementById('Despesas-modal')).hide();
 
         // Atualiza lista
@@ -251,9 +238,7 @@ if (visitaData.primeiraVisita) {
     });
   }
 
-  // ================================
-  // 📋 Pegar despesas (busca despesas + atualiza total e saldo)
-  // ================================
+  //  Pegar despesas 
   async function pegarDespesas() {
     try {
       const resp = await fetch("/api/despesas", { credentials: "include" });
@@ -262,7 +247,6 @@ if (visitaData.primeiraVisita) {
       
       // Data atual para comparação
       const hoje = new Date();
-      // Limite de 7 dias em milissegundos
       const limiteSeteDias = hoje.getTime() + (7 * 24 * 60 * 60 * 1000); 
 
       const container = document.querySelector(".row.row-cols-1.g-4");
@@ -282,14 +266,12 @@ if (visitaData.primeiraVisita) {
         despesas.forEach(d => {
           const valorNum = Number(d.valor || 0);
           
-          // Soma ao total apropriado e CONTA PAGAS
           if (d.pago) {
             totalPago += valorNum;
             despesasPagasCount++;
           } else {
             totalPendente += valorNum;
             
-            // Lógica de Próxima/Distante (apenas para despesas PENDENTES)
             if (d.data) {
               const dataVencimento = new Date(d.data).getTime();
 
@@ -345,13 +327,11 @@ if (visitaData.primeiraVisita) {
         // Despesas pendentes
         const despesasPendentesCount = despesasTotaisCount - despesasPagasCount;
 
-        // Atualiza total pendente de VALOR
         const totalEl = document.getElementById("total-pendente");
         if (totalEl) {
           totalEl.innerText = totalPendente.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
         }
 
-        // >>> ATUALIZA OS CONTADORES DE QUANTIDADE DE DESPESAS NO RESUMO
         const despesasQtdeEl = document.getElementById("despesas-quantidade");
         if (despesasQtdeEl) {
           despesasQtdeEl.innerText = String(despesasTotaisCount);
@@ -376,7 +356,6 @@ if (visitaData.primeiraVisita) {
         if (distantesEl) {
           distantesEl.innerText = String(despesasDistantesCount);
         }
-        // <<< FIM DA ATUALIZAÇÃO DOS CONTADORES
 
         // Tenta obter renda atual do backend
         try {
@@ -389,9 +368,8 @@ if (visitaData.primeiraVisita) {
           console.warn("Não foi possível obter renda do backend:", e);
         }
 
-        // Calcula saldo = rendaMensal - apenas despesas PAGAS
+        // Calcula saldo = rendaMensal - despesas PAGAS
         const saldoCalc = (rendaMensalLocal != null) ? (rendaMensalLocal - totalPago) : (0 - totalPago);
-        // Subtrai o valor guardado (dinheiro separado)
         const saldoAposGuardado = saldoCalc - (Number(savedMoneyLocal) || 0);
         const saldoText = saldoAposGuardado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -408,7 +386,6 @@ if (visitaData.primeiraVisita) {
     }
   }
 
-  // Função de pagar despesa atualizada
   async function pagarDespesa(id) {
     if (!confirm('Confirma o pagamento desta despesa? Isso irá atualizar seu saldo.')) return;
 
@@ -464,9 +441,7 @@ if (visitaData.primeiraVisita) {
     }
   }
 
-  // ================================
-  // 🎯 Metas
-  // ================================
+  //  Metas
   async function pegarMetas() {
     const metasContainer = document.getElementById('metasContainer');
     if (!metasContainer) return;
@@ -549,10 +524,8 @@ metasContainer.appendChild(col);
     }
   }
 
-// nova função para abrir modal de meta por id
   async function openMetaModal(id) {
     try {
-      // tenta achar dados no DOM primeiro (ex.: card com data-id)
       const card = document.querySelector(`.card[data-id="${id}"]`);
       if (card) {
         const titulo = card.querySelector('.card-title')?.textContent?.trim() || '—';
@@ -565,7 +538,6 @@ metasContainer.appendChild(col);
         if (meta) document.getElementById('metaDetalhesValor').textContent = meta;
       }
 
-      // tentar obter dados mais completos do backend (se existir rota)
       try {
         const resp = await fetch(`/api/metas/${id}`, { credentials: 'include' });
         if (resp.ok) {
@@ -578,7 +550,6 @@ metasContainer.appendChild(col);
           document.getElementById('metaDetalhesStatus').textContent = m.concluida ? 'Concluída' : 'Pendente';
         }
       } catch (e) {
-        // ok — continuar com dados do DOM se backend indisponível
       }
 
       // abre modal
@@ -592,13 +563,10 @@ metasContainer.appendChild(col);
     }
   }
 
-// extensão em delegation para abrir modal ao clicar no card (ignora clicks no dropdown)
   function setupDelegation() {
-    // ...existing code...
     const metasContainer = document.getElementById('metasContainer');
     if (metasContainer) {
       metasContainer.addEventListener('click', (e) => {
-        // se clicou dentro do dropdown/menu, ignore (menu já tem handlers)
         if (e.target.closest('.dropdown')) return;
 
         const card = e.target.closest('.card');
@@ -607,12 +575,9 @@ metasContainer.appendChild(col);
         if (id) openMetaModal(id);
       });
     }
-    // ...existing code...
   }
 
-  // ================================
-  // ► Modal + criação dinâmica de Metas
-  // ================================
+  // criação dinâmica de Metas
   function ensureAddMetaModal() {
     if (document.getElementById('addMetaModal')) return;
     const html = `
@@ -701,12 +666,10 @@ metasContainer.appendChild(col);
     if (totalMetas) totalMetas.textContent = String(total);
   }
 
-  // inclui meta no DOM e tenta persistir no backend (se existir rota)
   async function addMeta(meta) {
     const metasContainer = document.getElementById('metasContainer');
     if (!metasContainer) return;
 
-    // tenta enviar ao backend — se falhar, apenas adiciona client-side
     try {
       const resp = await fetch('/api/metas', {
         method: 'POST',
@@ -716,7 +679,6 @@ metasContainer.appendChild(col);
       });
       if (resp.ok) {
         const data = await resp.json().catch(()=>({}));
-        // backend pode retornar id — use se houver
         if (data.id) meta.id = data.id;
       }
     } catch (e) {
@@ -725,28 +687,22 @@ metasContainer.appendChild(col);
     }
 
     const card = createMetaCardDOM(meta);
-    metasContainer.prepend(card); // adiciona no topo
+    metasContainer.prepend(card); 
     refreshMetaCounters();
   }
 
-  // ================================
-  //  🌟 CORREÇÃO ESTÁ AQUI 🌟
-  // ================================
+
   function setupAddMetaFlow() {
-    // O 'DOMContentLoaded' aninhado foi REMOVIDO daqui.
 
     const btnAddMeta = document.getElementById('btn-adicionar-meta');
     const modalEl = document.getElementById('addMetaModal');
     
     if (!btnAddMeta || !modalEl) {
-      // Não exibe erro se os elementos não existirem (ex: estar na pagina usuario.html)
       return;
     }
 
-    // Criar instância do modal uma única vez
     const modal = new bootstrap.Modal(modalEl);
 
-    // Listener do botão
     btnAddMeta.addEventListener('click', () => {
       try {
         modal.show();
@@ -755,7 +711,6 @@ metasContainer.appendChild(col);
       }
     });
 
-    // Listener do salvar
     const btnSave = document.getElementById('addMetaSave');
     if (btnSave) {
       btnSave.addEventListener('click', async () => {
@@ -796,13 +751,9 @@ metasContainer.appendChild(col);
           document.getElementById('metaGuardado').value = '';
           document.getElementById('metaData').value = '';
 
-          // Fechar modal
           const modal = bootstrap.Modal.getInstance(modalEl);
           if (modal) modal.hide();
-
-          // Recarregar metas
           await pegarMetas();
-
         } catch (err) {
           console.error('Erro ao salvar meta:', err);
           alert(err.message || 'Erro ao salvar meta');
@@ -811,7 +762,6 @@ metasContainer.appendChild(col);
     }
   }
 
-  // pequeno helper para escapar texto em innerHTML
   function escapeHtml(str) {
     if (!str) return '';
     return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;');
@@ -823,7 +773,7 @@ metasContainer.appendChild(col);
     return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
-  // Helper para parsear string BRL para número (ex: "R$ 1.234,56" -> 1234.56)
+  // Helper para parsear string BRL para número
   function parseBRL(str) {
     if (!str) return 0;
     try {
@@ -833,7 +783,6 @@ metasContainer.appendChild(col);
     }
   }
 
-  // Atualiza o elemento que mostra o valor guardado
   function updateSavedUI() {
     const el = document.getElementById('valorGuardado');
     if (el) el.innerText = formatBRL(savedMoneyLocal || 0);
@@ -885,20 +834,16 @@ if (btnSalvarGuardado) {
         }
 
         try {
-            // Soma ao valor atual
             const novoTotal = (Number(savedMoneyLocal) || 0) + valor;
             
             // Tenta salvar no backend primeiro
             const salvouNoBackend = await persistSavedBackend(novoTotal);
             
             if (salvouNoBackend) {
-                // Atualiza UI
                 updateSavedUI();
-                // Fecha modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('guardarDinheiroModal'));
                 if (modal) modal.hide();
                 
-                // Limpa input
                 input.value = '';
                 
                 // Atualiza saldo
@@ -912,10 +857,7 @@ if (btnSalvarGuardado) {
     });
 }
 
-  // Inicializa
-function loadSavedLocalFallback() {
-  console.warn("loadSavedLocalFallback() não está implementada — ignorando...");
-}
+
 
   loadSavedLocalFallback();
   await pegarDespesas();

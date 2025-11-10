@@ -15,51 +15,42 @@
 
   <body>
     <!-- 🔹 Navbar -->
-    <nav class="navbar navbar-expand-md pb-3 px-4 bg-white shadow-sm">
-      <div class="container-fluid">
-        <!-- Botão Toggle -->
-        <button
-          class="navbar-toggler order-md-1 me-2"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarLinks"
-          aria-controls="navbarLinks"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
+<nav class="navbar navbar-expand-md bg-white shadow-sm py-2 px-4">
+  <div class="container-fluid d-flex align-items-center justify-content-between">
+    
+    <!-- LOGO - LEFT -->
+    <a class="navbar-brand d-flex align-items-center" href="index.html">
+      <img src="img/logo-AmanhaMaisLeve.png" alt="Logo"> 
+    </a> 
+    <b class="fs-3">Renda+</b>
+    <!-- BOTÃO HAMBÚRGUER -->
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-        <!-- Botões Fixos -->
-        <div class="d-flex order-md-2 ms-auto">
-          <button class="btn" onclick="window.location.href='login.html'">
-            Entrar
-          </button>
-          <button class="btn" onclick="window.location.href='registro.html'">
-            Criar Conta
-          </button>
-        </div>
+    <!-- CONTEÚDO COLAPSÁVEL -->
+    <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
+      <!-- LINKS CENTRAIS -->
+      <ul class="navbar-nav mb-2 mb-md-0 text-center">
+        <li class="nav-item"><a class="nav-link px-3" href="index.html">Início</a></li>
+        <li class="nav-item"><a class="nav-link px-3" href="#objetivo">Nosso Objetivo</a></li>
+        <li class="nav-item"><a class="nav-link px-3" href="#comoTrabalhamos">Como Trabalhamos</a></li>
+        <li class="nav-item"><a class="nav-link px-3" href="#contato">Contato</a></li>
+        <li class="nav-item "><a class="nav-link px-3 fw-bold" href="AprendaMais.html">Aprenda Mais</a></li>
+      </ul>
+    </div>
 
-        <!-- Links do Menu -->
-        <div class="collapse navbar-collapse order-md-0" id="navbarLinks">
-          <img src="img/logo-AmanhaMaisLeve.png" alt="Logo Renda+" />
-          <ul class="navbar-nav ms-3 mb-2 mb-md-0">
-            <li class="nav-item">
-              <a class="nav-link" href="index.html">Início</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="index.html">Nosso Objetivo</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="index.html">Como Trabalhamos</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="index.html">Contato</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+    <!-- BOTÕES À DIREITA -->
+    <div class="d-flex align-items-center ms-3">
+      <button class="btn" onclick="window.location.href='login.html'">Entrar</button>
+      <button class="btn" onclick="window.location.href='registro.html'">Criar Conta</button>
+      
+    </div>
+
+  </div>
+</nav>
+
 
     <!-- 🔹 Área de Login -->
     <div class="login">

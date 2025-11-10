@@ -1,4 +1,4 @@
-// ================== IMPORTAÇÕES ==================
+// IMPORTAÇÕES 
 import fs from "fs";
 import express from "express";
 import session from "express-session";
@@ -7,15 +7,13 @@ import path from "path";
 import { fileURLToPath } from "url";
 import mysql from "mysql2/promise";
 
-// ================== CONFIGURAÇÃO BASE ==================
+// CONFIGURAÇÃO BASE 
 const app = express();
 
 app.use(express.json());
 
-// trust proxy (importante para cookies secure quando atrás de load balancer / Railway)
 app.set('trust proxy', 1);
 
-// session (cookie segura em produção)
 app.use(session({
   secret: "segredo",
   resave: false,
@@ -26,17 +24,17 @@ app.use(session({
   }
 }));
 
-// CORS dinâmico — permite requests do front hospedado no mesmo domínio ou de localhost em dev
+
 app.use(cors({
   origin: true,
   credentials: true
 }));
 
-// ================== CONFIGURAÇÕES DE CAMINHO ==================
+//  CONFIGURAÇÕES DE CAMINHO
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ================== CONEXÃO COM MYSQL ==================
+//  CONEXÃO COM MYSQL
 async function connectToDatabase() {
   try {
     const pool = await mysql.createPool({
@@ -59,7 +57,7 @@ async function connectToDatabase() {
 
 const pooldb = await connectToDatabase();
 
-// ================== IMPORTAÇÃO AUTOMÁTICA DO BANCO ==================
+// IMPORTAÇÃO AUTOMÁTICA DO BANCO 
 const dbPath = path.resolve(__dirname, "banco.sql");
 
 async function importarBanco() {
@@ -90,13 +88,13 @@ async function importarBanco() {
   }
 }
 
-// ================== FRONTEND (pasta public) ==================
+// FRONTEND (pasta public)
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ================== FUNÇÃO DE AUTENTICAÇÃO ==================
+// FUNÇÃO DE AUTENTICAÇÃO
 function autenticar(req, res, next) {
   if (!req.session || !req.session.usuario) {
     return res.status(401).json({ erro: "Usuário não autenticado" });
@@ -104,7 +102,7 @@ function autenticar(req, res, next) {
   next();
 }
 
-// ================== ROTAS ==================
+// ROTAS
 
 app.post("/api/registro", async (req, res) => {
   const { nome, email, senha } = req.body;
@@ -123,7 +121,6 @@ app.post("/api/login", async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ erro: "Email e senha obrigatórios" });
   try {
-    // AJUSTADO: Seleciona as colunas de configuração, incluindo dinheiroGuardado
     const [rows] = await pooldb.query(
       "SELECT id, nome, email, rendaMensal, metaMensal, dinheiroGuardado, primeira_visita FROM usuarios WHERE email = ? AND senha = ?", 
       [email, senha]
@@ -139,7 +136,7 @@ app.post("/api/login", async (req, res) => {
 
 
 
-// ADICIONE ESTA NOVA ROTA AQUI
+
 app.get("/api/primeira-visita", autenticar, async (req, res) => {
   const idUsuario = req.session.usuario.id;
   try {
@@ -180,7 +177,7 @@ app.post("/api/primeira-visita", autenticar, async (req, res) => {
   }
 });
 
-// ================== ROTA DINHEIRO GUARDADO / ATUALIZAR CONFIG (NOVA ROTA) ==================
+// ROTA DINHEIRO GUARDADO 
 app.post("/api/atualizar-config", autenticar, async (req, res) => {
   const { rendaMensal, dinheiroGuardado } = req.body;
   const idUsuario = req.session.usuario.id;
@@ -190,13 +187,11 @@ app.post("/api/atualizar-config", autenticar, async (req, res) => {
   }
 
   try {
-    // 1. Atualizar no Banco de Dados (rendaMensal e dinheiroGuardado)
     await pooldb.query(
       "UPDATE usuarios SET rendaMensal = ?, dinheiroGuardado = ? WHERE id = ?",
       [rendaMensal, dinheiroGuardado, idUsuario]
     );
 
-    // 2. Buscar dados atualizados para atualizar a sessão
     const [rows] = await pooldb.query(
       "SELECT id, nome, email, rendaMensal, metaMensal, dinheiroGuardado, primeira_visita FROM usuarios WHERE id = ?",
       [idUsuario]
@@ -213,9 +208,8 @@ app.post("/api/atualizar-config", autenticar, async (req, res) => {
     res.status(500).json({ erro: "Erro ao salvar informações: " + err.message });
   }
 });
-// ==============================================================================
 
-// Rota específica para atualizar apenas o dinheiro guardado (compatível com frontend)
+// Rota específica para atualizar apenas o dinheiro guardado 
 app.post("/api/guardado", autenticar, async (req, res) => {
     const { guardado } = req.body;
     const idUsuario = req.session.usuario.id;
@@ -230,13 +224,11 @@ app.post("/api/guardado", autenticar, async (req, res) => {
             [guardado, idUsuario]
         );
 
-        // Busca valor atualizado
         const [rows] = await pooldb.query(
             "SELECT dinheiroGuardado FROM usuarios WHERE id = ?",
             [idUsuario]
         );
 
-        // Atualiza sessão
         req.session.usuario.dinheiroGuardado = rows[0].dinheiroGuardado;
 
         res.json({ 
@@ -287,7 +279,7 @@ app.get("/api/usuario", autenticar, async (req, res) => {
       return res.status(404).json({ erro: "Dados do usuário não encontrados." });
     }
 
-    // Atualiza a sessão e envia os dados mais recentes (incluindo dinheiroGuardado)
+    // Atualiza a sessão e envia os dados mais recentes
     req.session.usuario = rows[0];
     res.json(rows[0]);
   } catch (err) {
@@ -442,17 +434,6 @@ app.post("/api/metas/:id/concluir", autenticar, async (req, res) => {
   }
 });
 
-// ================== INICIAR SERVIDOR ==================
-const PORT = process.env.PORT;
-if (!PORT) {
-  console.error("❌ Nenhuma porta recebida via process.env.PORT (Railway exige isso).");
-  process.exit(1);
-}
-
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  importarBanco();
-});
 
 // Rota para obter o valor guardado atual do usuário
 app.get("/api/guardado", autenticar, async (req, res) => {
@@ -469,3 +450,19 @@ app.get("/api/guardado", autenticar, async (req, res) => {
 		res.status(500).json({ erro: err.message });
 	}
 });
+
+
+
+
+// ================== INICIAR SERVIDOR ==================
+const PORT = process.env.PORT;
+if (!PORT) {
+  console.error("❌ Nenhuma porta recebida via process.env.PORT");
+  process.exit(1);
+}
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  importarBanco();
+});
+

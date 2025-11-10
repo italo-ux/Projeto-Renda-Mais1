@@ -63,6 +63,16 @@ node app.js
 npx nodemon app.js
 ```
 
+##  Deployment
+
+O projeto está hospedado na plataforma Railway, oferecendo:
+- Deploy automático a partir do repositório GitHub
+- SSL/HTTPS gratuito
+- Banco de dados MySQL gerenciado
+- Escalabilidade automática
+
+Acesse a aplicação em produção: [Renda+ (https://projeto-renda-mais.up.railway.app)]
+
 ##  Banco de Dados
 
 O projeto usa MySQL e as tabelas são criadas automaticamente na primeira execução. Schema principal:
