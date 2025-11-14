@@ -14,40 +14,58 @@
 <body>
   <!-- Navbar -->
   <nav class="navbar navbar-expand-md bg-white px-3">
-    <div class="container-fluid">
-      <!-- Brand / logo -->
-      <a class="navbar-brand d-flex align-items-center" href="index.html">
-        <img class="img-fluid" src="img/logo-AmanhaMaisLeve.png" alt="logo" style="width:3rem; height:auto;" />
-      </a>
+      <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="index.html">
+          <img
+            class="img-fluid"
+            src="img/logo-AmanhaMaisLeve.png"
+            alt="logo"
+            style="width: 3rem; height: auto;"
+          />
+        </a>
 
-      <!-- Toggler / hamburger -->
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+        <!-- Botão toggle -->
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNavbar"
+          aria-controls="mainNavbar"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-      <!-- Collapsible menu -->
-      <div class="collapse navbar-collapse" id="mainNavbar">
-        <div class="mx-auto text-center d-none d-md-block navbar-center">
-          <h1 class="m-0">
-            Página Inicial do <b style="color: #2d7c2d;">Renda+</b>
-            <p id="data" style="font-size:20px; margin:0; padding:0; color:#252525;"></p>
-          </h1>
+        <!-- Menu -->
+        <div class="collapse navbar-collapse" id="mainNavbar">
+          <div class="mx-auto text-center d-none d-md-block navbar-center">
+            <h1 class="m-0 fs-4">
+              Página Metas do <b style="color: #2d7c2d;">Renda+</b>
+              <p
+                id="data"
+                style="font-size: 20px; margin: 0; padding: 0; color: #252525;"
+              ></p>
+            </h1>
+          </div>
+
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Início</a>
+            </li>
+            <li class="nav-item">
+              <button
+                class="btn btn-sm btn-outline-danger ms-2"
+                id="sair"
+                type="button"
+              >
+                Sair
+              </button>
+            </li>
+          </ul>
         </div>
-
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-          <li class="nav-item">
-            <a class="nav-link" href="index.html">Início</a>
-          </li>
-          <li class="nav-item">
-            <button class="btn btn-sm btn-outline-danger ms-2" id="sair" type="button">Sair</button>
-          </li>
-           <li class="nav-item">
-             <a href="AprendaMais.html" class="nav-link btn">Aprenda Mais</a>
-           </li>
-        </ul>
       </div>
-    </div>
-  </nav>
+    </nav>
 
   <header class="usuario"></header>
 

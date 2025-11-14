@@ -260,22 +260,15 @@
   color: #444;
 }
 
-
-
-
-
-
-
-
-
-
-
+/* Mobile: navbar compacta e remover a palavra "Renda+" (mesma regra para página de metas) */
 @media (max-width: 768px) {
- .imagens-metas img{
-  display: none;
- }
- #img-rio img, #img-formando img, #img-crianca img{
-  display: none;
- }
+  .navbar { padding: 0.2rem 0.5rem; }
+  .navbar .navbar-brand img { width: 2rem; height: auto; }
+  .navbar-center h1 { font-size: 0.95rem; margin: 0; }
+  .navbar-center b { display: none !important; } /* esconde "Renda+" */
+  .navbar .nav-link { font-size: 0.9rem; padding-left: 0.5rem; }
+  .navbar .btn { padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 6px; }
+  .navbar .btn.btn-sm { padding: 0.15rem 0.4rem; font-size: 0.7rem; }
+  .navbar img { max-width: 2.2rem; }
 }
-    
+
