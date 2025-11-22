@@ -9,11 +9,27 @@ let lastPieData = null;
 let lastBarData = null;
 let isUpdating = false;
 let initialized = false;
+// proteção simples contra refetch rápido
+const lastFetchTimes = {};
+const MIN_FETCH_INTERVAL = 800; // ms
+
+async function debugFetch(url, opts) {
+  const now = Date.now();
+  const last = lastFetchTimes[url] || 0;
+  if (now - last < MIN_FETCH_INTERVAL) {
+    console.debug(`[graficos] pulando fetch muito rápido: ${url}`);
+    return { ok: false, status: 429, json: async () => ({}) };
+  }
+  lastFetchTimes[url] = now;
+  console.debug(`[graficos] fetch ->`, url, new Date(now).toISOString());
+  console.trace();
+  return fetch(url, opts);
+}
 
 async function criarGraficoPizza() {
   console.debug('[graficos] criarGraficoPizza chamado');
   try {
-    const res = await fetch('/api/dashboard/guardado-vs-gasto');
+    const res = await debugFetch('/api/dashboard/guardado-vs-gasto');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const dados = await res.json();
 
@@ -64,7 +80,7 @@ async function criarGraficoPizza() {
 async function criarGraficoBarras() {
   console.debug('[graficos] criarGraficoBarras chamado');
   try {
-    const res = await fetch('/api/dashboard/gastos-mensais');
+    const res = await debugFetch('/api/dashboard/gastos-mensais');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const dados = await res.json();
 
@@ -122,8 +138,8 @@ async function atualizarGraficosDashboard() {
   isUpdating = true;
   try {
     const [resp1, resp2] = await Promise.all([
-      fetch('/api/dashboard/guardado-vs-gasto'),
-      fetch('/api/dashboard/gastos-mensais')
+      debugFetch('/api/dashboard/guardado-vs-gasto'),
+      debugFetch('/api/dashboard/gastos-mensais')
     ]);
 
    // pie
