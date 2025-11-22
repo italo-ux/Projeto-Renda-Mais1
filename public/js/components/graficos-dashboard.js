@@ -20,7 +20,7 @@ async function criarGraficoPizza() {
     const canvas = document.getElementById('graficoPizza');
     if (!canvas) return;
 
-    try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) { /* ignore */ }
+    try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) {  }
 
     const style = getComputedStyle(document.documentElement);
     const colorGuardado = style.getPropertyValue('--renda-verde').trim() || '#6a994e';
