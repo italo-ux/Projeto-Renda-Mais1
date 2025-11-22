@@ -1,4 +1,9 @@
-// Exporta função para inicializar os gráficos do dashboard
+// Exporta função para inicializar e atualizar os gráficos do dashboard
+
+// Instâncias de chart mantidas para updates sem recriar tudo
+let chartPie = null;
+let chartBar = null;
+let autoRefreshTimer = null;
 
 async function criarGraficoPizza() {
   try {
@@ -16,7 +21,7 @@ async function criarGraficoPizza() {
     const colorGuardado = style.getPropertyValue('--renda-verde').trim() || '#6a994e';
     const colorGasto = style.getPropertyValue('--renda-vermelho').trim() || '#bc4749';
 
-    new Chart(canvas, {
+    chartPie = new Chart(canvas, {
       type: 'pie',
       data: {
         labels: ['Guardado', 'Gasto'],
@@ -66,14 +71,14 @@ async function criarGraficoBarras() {
     grad.addColorStop(0, c1);
     grad.addColorStop(1, c2);
 
-    new Chart(ctx, {
+    chartBar = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: dados.meses || [],
         datasets: [{
           label: 'Gastos',
           data: dados.valores || [],
-          backgroundColor: grad, // gradiente
+          backgroundColor: grad, 
           borderColor: '#145c36',
           borderWidth: 1
         }]
@@ -96,7 +101,61 @@ async function criarGraficoBarras() {
   }
 }
 
+// Atualiza os dados dos charts existentes 
+async function atualizarGraficosDashboard() {
+  try {
+    // Atualiza pie
+    const resp1 = await fetch('/api/dashboard/guardado-vs-gasto');
+    if (resp1.ok) {
+      const d1 = await resp1.json();
+      if (chartPie) {
+        chartPie.data.datasets[0].data = [d1.guardado ?? 0, d1.gasto ?? 0];
+        chartPie.update();
+      } else {
+        // cria se não existir
+        await criarGraficoPizza();
+      }
+    } else {
+      console.warn('/api/dashboard/guardado-vs-gasto retornou', resp1.status);
+    }
+
+    // Atualiza barras
+    const resp2 = await fetch('/api/dashboard/gastos-mensais');
+    if (resp2.ok) {
+      const d2 = await resp2.json();
+      if (chartBar) {
+        chartBar.data.labels = Array.isArray(d2.meses) ? d2.meses : [];
+        chartBar.data.datasets[0].data = Array.isArray(d2.valores) ? d2.valores : [];
+        chartBar.update();
+      } else {
+        await criarGraficoBarras();
+      }
+    } else {
+      console.warn('/api/dashboard/gastos-mensais retornou', resp2.status);
+    }
+  } catch (err) {
+    console.error('Erro ao atualizar gráficos:', err);
+  }
+}
+
+// Inicia auto refresh
+function startAutoRefresh(intervalMs = 300000) { // padrão 5 minutos
+  stopAutoRefresh();
+  autoRefreshTimer = setInterval(() => {
+    atualizarGraficosDashboard().catch(err => console.error('Auto-refresh falhou:', err));
+  }, intervalMs);
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
+}
+
 export async function inicializarGraficosDashboard() {
-  // executa os dois gráficos (em paralelo)
+  // cria os dois gráficos (em paralelo)
   await Promise.all([criarGraficoPizza(), criarGraficoBarras()]);
 }
+
+export { atualizarGraficosDashboard, startAutoRefresh, stopAutoRefresh };
