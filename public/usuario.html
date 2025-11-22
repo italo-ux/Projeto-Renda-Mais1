@@ -372,18 +372,11 @@
     import { inicializarGraficosDashboard } from '/js/components/graficos-dashboard.js';
 
     (async () => {
-      if (window.__graficos_initializing) { console.debug('[usuario] graficos já em inicialização — pulando'); return; }
-      window.__graficos_initializing = true;
-      console.debug('[usuario] iniciando carregamento de graficos-dashboard');
       try {
         await loadComponent('/components/graficos-dashboard.html', 'container-graficos');
         await inicializarGraficosDashboard();
-        console.debug('[usuario] graficos inicializados');
       } catch (err) {
         console.error('Erro ao carregar e inicializar graficos-dashboard:', err);
-      } finally {
-        // remover flag após algum tempo para permitir re-init manual se necessário
-        setTimeout(() => { window.__graficos_initializing = false; }, 5000);
       }
     })();
   </script>

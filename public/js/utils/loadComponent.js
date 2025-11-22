@@ -2,7 +2,6 @@
 // Função utilitária para carregar um componente HTML via fetch e injetá-lo no DOM
 
 export async function loadComponent(path, targetId) {
-  console.debug('[loadComponent] carregando', path, '->', targetId);
   try {
     const res = await fetch(path);
     if (!res.ok) throw new Error(`Failed to load component: ${path} (status ${res.status})`);
