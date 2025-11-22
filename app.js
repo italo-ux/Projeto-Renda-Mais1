@@ -288,6 +288,58 @@ app.get("/api/usuario", autenticar, async (req, res) => {
   }
 });
 
+// ================== DASHBOARD (gráficos) ==================
+// GET: Guardado vs Gasto (pie)
+app.get('/api/dashboard/guardado-vs-gasto', autenticar, async (req, res) => {
+    const idUsuario = req.session.usuario.id;
+    try {
+        const [uRows] = await pooldb.query(
+            'SELECT dinheiroGuardado FROM usuarios WHERE id = ?',
+            [idUsuario]
+        );
+        const guardado = uRows.length ? Number(uRows[0].dinheiroGuardado || 0) : 0;
+
+        const [gRows] = await pooldb.query(
+            'SELECT IFNULL(SUM(valor),0) AS totalGasto FROM despesas WHERE id_usuario = ?',
+            [idUsuario]
+        );
+        const gasto = gRows.length ? Number(gRows[0].totalGasto || 0) : 0;
+
+        res.json({ guardado, gasto });
+    } catch (err) {
+        console.error('Erro /api/dashboard/guardado-vs-gasto:', err);
+        res.status(500).json({ erro: 'Erro interno' });
+    }
+});
+
+// GET: Gastos mensais agrupados (bar)
+app.get('/api/dashboard/gastos-mensais', autenticar, async (req, res) => {
+    const idUsuario = req.session.usuario.id;
+    try {
+        const [rows] = await pooldb.query(
+            `SELECT YEAR(data) AS ano, MONTH(data) AS mes_num, SUM(valor) AS total
+             FROM despesas
+             WHERE id_usuario = ?
+             GROUP BY YEAR(data), MONTH(data)
+             ORDER BY YEAR(data), MONTH(data)`,
+            [idUsuario]
+        );
+
+        const mesesPt = [
+            'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+            'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'
+        ];
+
+        const meses = rows.map(r => mesesPt[(r.mes_num || 1) - 1]);
+        const valores = rows.map(r => Number(r.total || 0));
+
+        res.json({ meses, valores });
+    } catch (err) {
+        console.error('Erro /api/dashboard/gastos-mensais:', err);
+        res.status(500).json({ erro: 'Erro interno' });
+    }
+});
+
 app.post("/api/logout", (req, res) => {
   req.session.destroy(err => {
     if (err) return res.status(500).json({ erro: "Erro ao encerrar sessão" });

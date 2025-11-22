@@ -182,11 +182,7 @@
     font-weight: 700;
     color: var(--vclaro);
   }
-  main{
-    background-color: white;
-    padding: 2em;
-    margin: 1em;
-  }
+
   #guardado-meta{
     font-size: 1.6rem;
     font-weight:700;
