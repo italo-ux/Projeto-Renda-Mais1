@@ -1,17 +1,17 @@
 // Exporta função para inicializar e atualizar os gráficos do dashboard
 
-// Instâncias de chart mantidas para updates sem recriar tudo
+
 let chartPie = null;
 let chartBar = null;
 let autoRefreshTimer = null;
 
-// dados anteriores para detectar alterações
 let lastPieData = null;
 let lastBarData = null;
-// evita chamadas concorrentes
 let isUpdating = false;
+let initialized = false;
 
 async function criarGraficoPizza() {
+  console.debug('[graficos] criarGraficoPizza chamado');
   try {
     const res = await fetch('/api/dashboard/guardado-vs-gasto');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -62,6 +62,7 @@ async function criarGraficoPizza() {
 }
 
 async function criarGraficoBarras() {
+  console.debug('[graficos] criarGraficoBarras chamado');
   try {
     const res = await fetch('/api/dashboard/gastos-mensais');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -116,7 +117,8 @@ async function criarGraficoBarras() {
 
 // Atualiza os dados dos charts existentes apenas quando houver alteração
 async function atualizarGraficosDashboard() {
-  if (isUpdating) return; // evita chamadas sobrepostas
+  console.debug('[graficos] atualizarGraficosDashboard chamado');
+  if (isUpdating) { console.debug('[graficos] atualização já em andamento — ignorando'); return; } 
   isUpdating = true;
   try {
     const [resp1, resp2] = await Promise.all([
@@ -124,7 +126,7 @@ async function atualizarGraficosDashboard() {
       fetch('/api/dashboard/gastos-mensais')
     ]);
 
-    // pie
+   // pie
     if (resp1.ok) {
       const d1 = await resp1.json();
       const newPie = JSON.stringify([d1.guardado ?? 0, d1.gasto ?? 0]);
@@ -168,6 +170,7 @@ async function atualizarGraficosDashboard() {
 // Inicia auto refresh (chama atualizar, mas apenas aplica quando houver alteração)
 function startAutoRefresh(intervalMs = 300000) {
   stopAutoRefresh();
+  console.debug('[graficos] startAutoRefresh', intervalMs);
   autoRefreshTimer = setInterval(() => {
     if (!isUpdating) atualizarGraficosDashboard().catch(err => console.error('Auto-refresh falhou:', err));
   }, intervalMs);
@@ -181,6 +184,9 @@ function stopAutoRefresh() {
 }
 
 export async function inicializarGraficosDashboard() {
+  if (initialized) { console.debug('[graficos] inicializarGraficosDashboard: já inicializado — retornando'); return; }
+  initialized = true;
+  console.debug('[graficos] inicializarGraficosDashboard: inicializando gráficos');
   // cria os dois gráficos (em paralelo)
   await Promise.all([criarGraficoPizza(), criarGraficoBarras()]);
 }
