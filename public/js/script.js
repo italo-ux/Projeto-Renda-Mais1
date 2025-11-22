@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let userId;
   let nomeUsuario;
+  let emailUsuario;
   let rendaMensalLocal = null; 
   let savedMoneyLocal = 0; // valor guardado 
 
@@ -96,75 +97,96 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     userId = sessaoData.id;
     nomeUsuario = sessaoData.nome;
-    emailUsuario = sessaoData.email;
+  emailUsuario = sessaoData.email;
     // guarda a renda vinda do backend (se estiver presente na resposta da sessão)
     if (sessaoData.rendaMensal != null) rendaMensalLocal = Number(sessaoData.rendaMensal);
     // tenta obter valor guardado vindo do backend (se existir)
     if (sessaoData.guardado != null) savedMoneyLocal = Number(sessaoData.guardado) || 0;
     const usuarioNameEl = document.getElementById('usuario-name');
     if (usuarioNameEl) usuarioNameEl.innerHTML = nomeUsuario;
-if (emailUsuarioEl) emailUsuarioEl.innerHTML = emailUsuario;
+  // Seleciona o elemento que mostrará o email do usuário (pode estar na sidebar)
+  const emailUsuarioEl = document.getElementById('emailUsuario') || document.getElementById('sidebar-email');
+  if (emailUsuarioEl) emailUsuarioEl.innerHTML = emailUsuario;
 
-    //  Primeira visita
-    const visitaResp = await fetch(`/api/primeira-visita`, { credentials: "include" });
-const visitaData = await visitaResp.json();
+    //  Primeira visita — fluxo mais robusto com logs
+    try {
+      const visitaResp = await fetch('/api/primeira-visita', { credentials: 'include' });
+      let visitaData = null;
+      if (visitaResp.ok) {
+        try {
+          visitaData = await visitaResp.json();
+        } catch (parseErr) {
+          console.warn('Não foi possível parsear resposta de /api/primeira-visita:', parseErr);
+        }
+      } else {
+        console.warn('/api/primeira-visita retornou status', visitaResp.status);
+      }
 
-if (visitaData.primeiraVisita) {
-  const modalEl = document.getElementById('firstVisitModal');
-  if (modalEl && typeof bootstrap !== 'undefined') {
-    const firstModal = new bootstrap.Modal(modalEl);
-    firstModal.show();
+      console.debug('primeira-visita -> ok:', visitaResp.ok, 'data:', visitaData);
 
-    const saveBtn = document.getElementById('firstVisitSave');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', async () => {
-        const metaMensal = document.getElementById('metaMensal')?.value;
-        const rendaMensal = document.getElementById('rendaMensal')?.value;
+      if (visitaResp.ok && visitaData && visitaData.primeiraVisita) {
+        const modalEl = document.getElementById('firstVisitModal');
+        if (!modalEl) {
+          console.warn('Elemento do modal `#firstVisitModal` não encontrado no DOM');
+        } else if (typeof bootstrap === 'undefined') {
+          console.warn('Bootstrap não está disponível em window; não é possível abrir modal via JS');
+        } else {
+          const firstModal = new bootstrap.Modal(modalEl);
+          firstModal.show();
 
-        if (!metaMensal || !rendaMensal) {
-          alert('Por favor, preencha todos os campos.');
-          return;
-        }
+          const saveBtn = document.getElementById('firstVisitSave');
+          if (saveBtn) {
+            // remove listeners antigos para evitar chamadas duplicadas
+            saveBtn.replaceWith(saveBtn.cloneNode(true));
+            const newSaveBtn = document.getElementById('firstVisitSave');
+            newSaveBtn.addEventListener('click', async () => {
+              const metaMensal = document.getElementById('metaMensal')?.value;
+              const rendaMensal = document.getElementById('rendaMensal')?.value;
 
-        try {
-          const resp = await fetch('/api/primeira-visita', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ 
-              metaMensal: parseFloat(metaMensal), 
-              rendaMensal: parseFloat(rendaMensal) 
-            }),
-          });
+              if (!metaMensal || !rendaMensal) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+              }
 
-          const data = await resp.json();
+              try {
+                const resp = await fetch('/api/primeira-visita', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ 
+                    metaMensal: parseFloat(metaMensal), 
+                    rendaMensal: parseFloat(rendaMensal) 
+                  }),
+                });
 
-          if (resp.ok) {
-            // Atualiza a renda local
-            rendaMensalLocal = parseFloat(rendaMensal);
-           
-            firstModal.hide();
-            
-            const modalEl = document.getElementById('firstVisitModal');
-            if (modalEl) {
-              modalEl.addEventListener('hidden.bs.modal', () => {
-                modalEl.remove();
-              });
-            }
+                const data = await resp.json().catch(()=>({}));
 
-          
-            await pegarDespesas();
-          } else {
-            throw new Error(data.erro || 'Erro ao salvar informações');
-          }
-        } catch (err) {
-          console.error('Erro ao salvar primeira visita:', err);
-          alert(err.message || 'Erro ao conectar com o servidor. Tente novamente.');
-        }
-      });
-    }
-  }
-}
+                if (resp.ok) {
+                  rendaMensalLocal = parseFloat(rendaMensal);
+                  firstModal.hide();
+
+                  // remove modal do DOM após fechá-lo
+                  modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+
+                  await pegarDespesas();
+                } else {
+                  throw new Error(data.erro || 'Erro ao salvar informações');
+                }
+              } catch (err) {
+                console.error('Erro ao salvar primeira visita:', err);
+                alert(err.message || 'Erro ao conectar com o servidor. Tente novamente.');
+              }
+            });
+          } else {
+            console.warn('Botão #firstVisitSave não encontrado dentro do modal');
+          }
+        }
+      } else {
+        console.debug('Não é primeira visita ou resposta inválida — não abrir modal');
+      }
+    } catch (err) {
+      console.error('Erro ao checar primeira-visita:', err);
+    }
     } catch (err) {
     console.error("Erro ao obter sessão do usuário:", err);
   }
