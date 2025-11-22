@@ -13,8 +13,9 @@ async function criarGraficoPizza() {
     try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) { }
 
     const style = getComputedStyle(document.documentElement);
-    const colorGuardado = style.getPropertyValue('--renda-verde').trim() || '#6a994e';
-    const colorGasto = style.getPropertyValue('--renda-vermelho').trim() || '#bc4749';
+    // Mapeia para as variáveis da paleta do site
+    const colorGuardado = style.getPropertyValue('--vclaro').trim() || '#6a994e';
+    const colorGasto = style.getPropertyValue('--rojo').trim() || '#bc4749';
 
     new Chart(canvas, {
       type: 'pie',
@@ -57,8 +58,9 @@ async function criarGraficoBarras() {
     try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) {  }
 
     const style = getComputedStyle(document.documentElement);
-    const c1 = style.getPropertyValue('--renda-verde').trim() || '#a7c957';
-    const c2 = style.getPropertyValue('--renda-verde-escuro').trim() || '#235321';
+    // degradê usando as variáveis da paleta
+    const c1 = style.getPropertyValue('--vyellow').trim() || '#a7c957';
+    const c2 = style.getPropertyValue('--vescuro').trim() || '#235321';
 
     const ctx = canvas.getContext('2d');
 
@@ -97,6 +99,22 @@ async function criarGraficoBarras() {
 }
 
 export async function inicializarGraficosDashboard() {
+  const container = document.getElementById('container-graficos');
+  if (container) container.style.display = '';
   // executa os dois gráficos (em paralelo)
   await Promise.all([criarGraficoPizza(), criarGraficoBarras()]);
 }
+
+// inicialmente oculta container (se presente) — será exibido quando despesa for adicionada
+const _containerEl = document.getElementById('container-graficos');
+if (_containerEl) _containerEl.style.display = 'none';
+
+// Ouve evento para inicializar quando uma despesa for adicionada
+window.addEventListener('despesa:added', async () => {
+  try {
+    console.debug('[graficos] evento despesa:added recebido — inicializando gráficos');
+    await inicializarGraficosDashboard();
+  } catch (e) {
+    console.error('Erro ao inicializar gráficos a partir do evento despesa:added', e);
+  }
+});

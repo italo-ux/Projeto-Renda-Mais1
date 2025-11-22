@@ -373,10 +373,11 @@
 
     (async () => {
       try {
+        // apenas carrega o HTML do componente; a inicialização dos charts
+        // será feita quando uma despesa for adicionada (evento 'despesa:added')
         await loadComponent('/components/graficos-dashboard.html', 'container-graficos');
-        await inicializarGraficosDashboard();
       } catch (err) {
-        console.error('Erro ao carregar e inicializar graficos-dashboard:', err);
+        console.error('Erro ao carregar graficos-dashboard:', err);
       }
     })();
   </script>

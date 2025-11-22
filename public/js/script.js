@@ -251,8 +251,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       
         bootstrap.Modal.getInstance(document.getElementById('Despesas-modal')).hide();
 
-        // Atualiza lista
-        await pegarDespesas();
+        // Atualiza lista
+        await pegarDespesas();
+        // Notifica que uma despesa foi adicionada (para inicializar/exibir gráficos)
+        try {
+          window.dispatchEvent(new CustomEvent('despesa:added', { detail: { id: editandoId || null } }));
+        } catch (e) {
+          console.debug('Não foi possível dispatchar despesa:added', e);
+        }
 
       } catch (error) {
         console.error("Erro ao salvar despesa:", error);
