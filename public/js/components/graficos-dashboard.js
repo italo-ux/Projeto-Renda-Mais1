@@ -5,6 +5,12 @@ let chartPie = null;
 let chartBar = null;
 let autoRefreshTimer = null;
 
+// dados anteriores para detectar alterações
+let lastPieData = null;
+let lastBarData = null;
+// evita chamadas concorrentes
+let isUpdating = false;
+
 async function criarGraficoPizza() {
   try {
     const res = await fetch('/api/dashboard/guardado-vs-gasto');
@@ -14,8 +20,7 @@ async function criarGraficoPizza() {
     const canvas = document.getElementById('graficoPizza');
     if (!canvas) return;
 
-    
-    try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) { }
+    try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) { /* ignore */ }
 
     const style = getComputedStyle(document.documentElement);
     const colorGuardado = style.getPropertyValue('--renda-verde').trim() || '#6a994e';
@@ -27,24 +32,30 @@ async function criarGraficoPizza() {
         labels: ['Guardado', 'Gasto'],
         datasets: [{
           data: [dados.guardado ?? 0, dados.gasto ?? 0],
-          backgroundColor: [colorGuardado, colorGasto], // cores das fatias
+          backgroundColor: [colorGuardado, colorGasto],
           borderColor: '#ffffff',
           borderWidth: 2
         }]
       },
       options: {
-        maintainAspectRatio: false, // respeita a altura CSS do canvas
+        maintainAspectRatio: false,
         responsive: true,
         plugins: {
           legend: { position: 'bottom' },
           tooltip: {
             callbacks: {
-              label: ctx => `${ctx.label}: ${Number(ctx.raw).toLocaleString('pt-BR',{ style:'currency', currency:'BRL'})}`
+              label: function(ctx) {
+                const val = ctx.raw ?? 0;
+                return ctx.label + ': ' + Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+              }
             }
           }
         }
       }
     });
+
+    // registra estado inicial
+    try { lastPieData = JSON.stringify([dados.guardado ?? 0, dados.gasto ?? 0]); } catch(e){ lastPieData = null; }
   } catch (err) {
     console.error('Erro ao criar gráfico de pizza:', err);
   }
@@ -59,15 +70,15 @@ async function criarGraficoBarras() {
     const canvas = document.getElementById('graficoBarras');
     if (!canvas) return;
 
-    try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) {  }
+    try { const existing = Chart.getChart(canvas); if (existing) existing.destroy(); } catch (e) { /* ignore */ }
 
     const style = getComputedStyle(document.documentElement);
     const c1 = style.getPropertyValue('--renda-verde').trim() || '#a7c957';
     const c2 = style.getPropertyValue('--renda-verde-escuro').trim() || '#235321';
 
     const ctx = canvas.getContext('2d');
-
-    const grad = ctx.createLinearGradient(0,0,0,300);
+    const gradHeight = canvas.height || canvas.clientHeight || 300;
+    const grad = ctx.createLinearGradient(0, 0, 0, gradHeight);
     grad.addColorStop(0, c1);
     grad.addColorStop(1, c2);
 
@@ -78,71 +89,87 @@ async function criarGraficoBarras() {
         datasets: [{
           label: 'Gastos',
           data: dados.valores || [],
-          backgroundColor: grad, 
-          borderColor: '#145c36',
+          backgroundColor: grad,
+          borderColor: c2,
           borderWidth: 1
         }]
       },
       options: {
         maintainAspectRatio: false,
+        responsive: true,
         plugins: { legend: { display: false } },
         scales: {
           y: {
             beginAtZero: true,
-            ticks: {
-              callback: v => Number(v).toLocaleString('pt-BR',{ style:'currency', currency:'BRL' })
-            }
+            ticks: { callback: v => Number(v).toLocaleString('pt-BR',{ style:'currency', currency:'BRL' }) }
           }
         }
       }
     });
+
+    // registra estado inicial
+    try { lastBarData = JSON.stringify({ meses: dados.meses || [], valores: dados.valores || [] }); } catch(e){ lastBarData = null; }
   } catch (err) {
     console.error('Erro ao criar gráfico de barras:', err);
   }
 }
 
-// Atualiza os dados dos charts existentes 
+// Atualiza os dados dos charts existentes apenas quando houver alteração
 async function atualizarGraficosDashboard() {
+  if (isUpdating) return; // evita chamadas sobrepostas
+  isUpdating = true;
   try {
-    // Atualiza pie
-    const resp1 = await fetch('/api/dashboard/guardado-vs-gasto');
+    const [resp1, resp2] = await Promise.all([
+      fetch('/api/dashboard/guardado-vs-gasto'),
+      fetch('/api/dashboard/gastos-mensais')
+    ]);
+
+    // pie
     if (resp1.ok) {
       const d1 = await resp1.json();
-      if (chartPie) {
-        chartPie.data.datasets[0].data = [d1.guardado ?? 0, d1.gasto ?? 0];
-        chartPie.update();
-      } else {
-        // cria se não existir
-        await criarGraficoPizza();
+      const newPie = JSON.stringify([d1.guardado ?? 0, d1.gasto ?? 0]);
+      if (newPie !== lastPieData) {
+        if (chartPie) {
+          chartPie.data.datasets[0].data = JSON.parse(newPie);
+          chartPie.update();
+        } else {
+          await criarGraficoPizza();
+        }
+        lastPieData = newPie;
       }
     } else {
       console.warn('/api/dashboard/guardado-vs-gasto retornou', resp1.status);
     }
 
-    // Atualiza barras
-    const resp2 = await fetch('/api/dashboard/gastos-mensais');
+    // barras
     if (resp2.ok) {
       const d2 = await resp2.json();
-      if (chartBar) {
-        chartBar.data.labels = Array.isArray(d2.meses) ? d2.meses : [];
-        chartBar.data.datasets[0].data = Array.isArray(d2.valores) ? d2.valores : [];
-        chartBar.update();
-      } else {
-        await criarGraficoBarras();
+      const newBar = JSON.stringify({ meses: d2.meses || [], valores: d2.valores || [] });
+      if (newBar !== lastBarData) {
+        if (chartBar) {
+          chartBar.data.labels = (d2.meses && Array.isArray(d2.meses)) ? d2.meses : [];
+          chartBar.data.datasets[0].data = (d2.valores && Array.isArray(d2.valores)) ? d2.valores : [];
+          chartBar.update();
+        } else {
+          await criarGraficoBarras();
+        }
+        lastBarData = newBar;
       }
     } else {
       console.warn('/api/dashboard/gastos-mensais retornou', resp2.status);
     }
   } catch (err) {
     console.error('Erro ao atualizar gráficos:', err);
+  } finally {
+    isUpdating = false;
   }
 }
 
-// Inicia auto refresh
-function startAutoRefresh(intervalMs = 300000) { // padrão 5 minutos
+// Inicia auto refresh (chama atualizar, mas apenas aplica quando houver alteração)
+function startAutoRefresh(intervalMs = 300000) {
   stopAutoRefresh();
   autoRefreshTimer = setInterval(() => {
-    atualizarGraficosDashboard().catch(err => console.error('Auto-refresh falhou:', err));
+    if (!isUpdating) atualizarGraficosDashboard().catch(err => console.error('Auto-refresh falhou:', err));
   }, intervalMs);
 }
 
