@@ -377,10 +377,8 @@
       // carrega o HTML do componente
       await loadComponent('/components/graficos-dashboard.html', 'container-graficos');
 
-      // só inicializa os gráficos após despesa adicionada
-      window.addEventListener('despesa:added', () => {
-        inicializarGraficosDashboard();
-      });
+      // O componente `graficos-dashboard` gerencia o botão de "Atualizar gráfico".
+      // Não inicializamos automaticamente aqui para evitar atualizações automáticas.
 
     } catch (err) {
       console.error('Erro ao carregar graficos-dashboard:', err);
