@@ -105,16 +105,45 @@ export async function inicializarGraficosDashboard() {
   await Promise.all([criarGraficoPizza(), criarGraficoBarras()]);
 }
 
-// inicialmente oculta container (se presente) — será exibido quando despesa for adicionada
+// Garante que o container esteja visível como quando o componente foi inserido
 const _containerEl = document.getElementById('container-graficos');
-if (_containerEl) _containerEl.style.display = 'none';
+if (_containerEl) _containerEl.style.display = '';
 
-// Ouve evento para inicializar quando uma despesa for adicionada
-window.addEventListener('despesa:added', async () => {
-  try {
-    console.debug('[graficos] evento despesa:added recebido — inicializando gráficos');
-    await inicializarGraficosDashboard();
-  } catch (e) {
-    console.error('Erro ao inicializar gráficos a partir do evento despesa:added', e);
+// Cria um botão 'Atualizar gráfico' abaixo do container (escondido por padrão).
+// O botão só aparecerá quando uma despesa for adicionada. Não há atualização automática.
+(function setupAtualizarButton() {
+  const container = document.getElementById('container-graficos');
+  if (!container) return;
+
+  let btn = document.getElementById('btn-atualizar-grafico');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'btn-atualizar-grafico';
+    btn.textContent = 'Atualizar gráfico';
+    btn.style.display = 'none';
+    btn.className = 'btn btn-sm btn-primary mt-2';
+    container.insertAdjacentElement('afterend', btn);
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        await inicializarGraficosDashboard();
+      } catch (e) {
+        console.error('Erro ao atualizar gráficos:', e);
+      } finally {
+        btn.disabled = false;
+        // ocultar o botão após atualização
+        btn.style.display = 'none';
+      }
+    });
   }
-});
+
+  // Mostra apenas o botão quando uma despesa for adicionada (não atualiza automaticamente)
+  window.addEventListener('despesa:added', () => {
+    try {
+      btn.style.display = '';
+    } catch (e) {
+      console.error('Erro ao mostrar botão atualizar gráfico:', e);
+    }
+  });
+})();
