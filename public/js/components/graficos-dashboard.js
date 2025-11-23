@@ -157,7 +157,7 @@ export async function inicializarGraficosDashboard() {
         console.error('Erro ao atualizar gráficos:', e);
       } finally {
         btn.disabled = false;
-        btn.style.display = 'none';
+        // Mantém o botão visível para que o usuário possa atualizar novamente quando quiser
       }
     });
   }

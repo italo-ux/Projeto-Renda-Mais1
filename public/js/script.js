@@ -877,6 +877,27 @@ async function persistSavedBackend(value) {
     }
 }
 
+// Tenta buscar valor de 'guardado' no backend (GET). Retorna true se obteve do servidor.
+async function fetchSavedFromBackend() {
+  try {
+    const resp = await fetch('/api/guardado', { credentials: 'include' });
+    if (!resp.ok) {
+      // não encontrou ou erro no servidor
+      return false;
+    }
+    const data = await resp.json();
+    if (data && data.guardado != null) {
+      savedMoneyLocal = Number(data.guardado) || 0;
+      updateSavedUI();
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn('Não foi possível obter guardado do backend:', e);
+    return false;
+  }
+}
+
 // Listener para o botão de salvar guardado
 const btnSalvarGuardado = document.getElementById('btnSalvarGuardado');
 if (btnSalvarGuardado) {
@@ -895,19 +916,25 @@ if (btnSalvarGuardado) {
             
             // Tenta salvar no backend primeiro
             const salvouNoBackend = await persistSavedBackend(novoTotal);
-            
+
             if (salvouNoBackend) {
-                updateSavedUI();
-                const modal = bootstrap.Modal.getInstance(document.getElementById('guardarDinheiroModal'));
-                if (modal) modal.hide();
-                
-                input.value = '';
-                
-                // Atualiza saldo
-                await pegarDespesas();
+              // backend confirmou
+              updateSavedUI();
             } else {
-                throw new Error('Não foi possível salvar no servidor');
+              // fallback: persiste localmente e atualiza UI
+              savedMoneyLocal = novoTotal;
+              persistSavedLocally();
+              updateSavedUI();
+              console.warn('Valor guardado localmente: sincronize com o servidor quando possível.');
             }
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('guardarDinheiroModal'));
+            if (modal) modal.hide();
+
+            input.value = '';
+
+            // Atualiza saldo
+            await pegarDespesas();
         } catch (err) {
             alert('Erro ao guardar dinheiro: ' + err.message);
         }
@@ -916,7 +943,13 @@ if (btnSalvarGuardado) {
 
 
 
-  loadSavedLocalFallback();
+  // Preferir obter do backend; se não for possível, usar fallback local
+  try {
+    const gotFromServer = await fetchSavedFromBackend();
+    if (!gotFromServer) loadSavedLocalFallback();
+  } catch (e) {
+    loadSavedLocalFallback();
+  }
   await pegarDespesas();
   await pegarMetas();
   setupAddMetaFlow();
