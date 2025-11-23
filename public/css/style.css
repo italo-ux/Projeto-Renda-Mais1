@@ -761,6 +761,9 @@
   height: auto;
 
 }
+#graficoPizza, #graficoBarras {
+  height: 300px !important;
+}
 
   
   @media (max-width: 767.98px) {
