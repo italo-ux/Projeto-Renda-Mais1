@@ -367,21 +367,27 @@
   
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script type="module">
-    import { loadComponent } from '/js/utils/loadComponent.js';
-    import { inicializarGraficosDashboard } from '/js/components/graficos-dashboard.js';
-
-    (async () => {
-      try {
-        // apenas carrega o HTML do componente; a inicialização dos charts
-        // será feita quando uma despesa for adicionada (evento 'despesa:added')
-        await loadComponent('/components/graficos-dashboard.html', 'container-graficos');
-      } catch (err) {
-        console.error('Erro ao carregar graficos-dashboard:', err);
-      }
-    })();
-  </script>
   
+ <script type="module">
+  import { loadComponent } from '/js/utils/loadComponent.js';
+  import { inicializarGraficosDashboard } from '/js/components/graficos-dashboard.js';
+
+  (async () => {
+    try {
+      // carrega o HTML do componente
+      await loadComponent('/components/graficos-dashboard.html', 'container-graficos');
+
+      // só inicializa os gráficos após despesa adicionada
+      window.addEventListener('despesa:added', () => {
+        inicializarGraficosDashboard();
+      });
+
+    } catch (err) {
+      console.error('Erro ao carregar graficos-dashboard:', err);
+    }
+  })();
+</script>
+
 
   <!-- seu script geral -->
   <script src="js/script.js"></script>
