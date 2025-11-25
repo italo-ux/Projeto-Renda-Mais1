@@ -898,7 +898,6 @@
 }
 
 
-/* Mobile: navbar compacta e remover a palavra "Renda+" */
 @media (max-width: 768px) {
   .navbar { padding: 0.2rem 0.5rem; }
   .navbar .navbar-brand img { width: 2rem; height: auto; }
@@ -909,5 +908,27 @@
   .navbar .btn.btn-sm { padding: 0.15rem 0.4rem; font-size: 0.7rem; }
   .navbar img { max-width: 2.2rem; }
   header { padding-top: 3.5em; } /* reduz espaço do header em mobile */
+}
+
+
+@media (max-width: 768px) {
+  #app-sidebar, .sidebar {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  main.with-sidebar {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .sidebar-top,
+  .sidebar-user,
+  #sidebar-root {
+    display: none !important;
+  }
 }
 
