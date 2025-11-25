@@ -722,16 +722,18 @@
     }
 
 
-    function setupAddMetaFlow() {
+    function setupAddMetaFlow() {
 
-      const btnAddMeta = document.getElementById('btn-adicionar-meta');
-      const modalEl = document.getElementById('addMetaModal');
-      
-      if (!btnAddMeta || !modalEl) {
-        return;
-      }
-
-      // pequeno log para depuração
+      const btnAddMeta = document.getElementById('btn-adicionar-meta');
+      const modalEl = document.getElementById('addMetaModal');
+      
+      console.log('setupAddMetaFlow: btnAddMeta =', btnAddMeta ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
+      console.log('setupAddMetaFlow: modalEl =', modalEl ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
+      
+      if (!btnAddMeta || !modalEl) {
+        console.warn('setupAddMetaFlow: Saindo cedo - elementos não encontrados');
+        return;
+      }      // pequeno log para depuração
       console.log('setupAddMetaFlow: inicializando');
 
       const modal = new bootstrap.Modal(modalEl);
@@ -745,7 +747,8 @@
         }
       });
 
-      const btnSave = document.getElementById('addMetaSave');
+      const btnSave = document.getElementById('addMetaSave');
+      console.log('setupAddMetaFlow: procurando btnSave:', btnSave ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
       if (btnSave) {
         btnSave.addEventListener('click', async () => {
           console.log('setupAddMetaFlow: clicado salvar meta');

@@ -145,7 +145,7 @@ export async function inicializarGraficosDashboard() {
     btn.id = 'btn-atualizar-grafico';
     btn.textContent = 'Atualizar gráfico';
     btn.style.display = 'none';
-    btn.className = 'btn btn-sm mt-2';
+    btn.className = 'btn btn-paga mt-2';
 
     container.insertAdjacentElement('afterend', btn);
 
