@@ -1,4 +1,3 @@
-// js/components/graficos-dashboard.js
 
 // ===============================
 // GRÁFICO DE PIZZA
@@ -12,7 +11,6 @@ async function criarGraficoPizza() {
     const canvas = document.getElementById('graficoPizza');
     if (!canvas) return;
 
-    // destruir gráfico anterior
     try {
       const existing = Chart.getChart(canvas);
       if (existing) existing.destroy();
