@@ -942,6 +942,59 @@
     updateSavedUI();
   }
 
+  // Popular modal de detalhes (`#modalDetalhes`) com dados do backend ao ser exibido
+  (function attachModalDetalhes() {
+    const modalEl = document.getElementById('modalDetalhes');
+    if (!modalEl) return;
+    if (typeof bootstrap === 'undefined') return;
+
+    modalEl.addEventListener('show.bs.modal', async () => {
+      try {
+        const resp = await fetch('/api/despesas', { credentials: 'include' });
+        const tbody = modalEl.querySelector('table tbody');
+        const saldoEl = modalEl.querySelector('#Saldo');
+        const atualizadoEl = modalEl.querySelector('#Atualizado');
+
+        if (!tbody) return;
+
+        if (!resp.ok) {
+          tbody.innerHTML = '<tr><td colspan="5">Não foi possível obter dados do servidor.</td></tr>';
+          return;
+        }
+
+        const despesas = await resp.json();
+
+        if (!Array.isArray(despesas) || despesas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5">Nenhuma movimentação encontrada.</td></tr>';
+        } else {
+          tbody.innerHTML = despesas.map(d => {
+            const data = d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '-';
+            const descricao = escapeHtml(d.descricao || '-');
+            const categoria = escapeHtml(d.categoria || '');
+            const valor = formatBRL(d.valor);
+            const tipo = d.pago ? 'Pago' : (d.tipo || 'Despesa');
+            return `<tr><td>${data}</td><td>${descricao}</td><td>${categoria}</td><td>${valor}</td><td>${tipo}</td></tr>`;
+          }).join('');
+        }
+
+        // Atualiza saldo mostrado no modal com cálculo simples (renda - totalPago)
+        try {
+          let totalPago = 0;
+          despesas.forEach(d => { if (d.pago) totalPago += Number(d.valor || 0); });
+          const renda = (typeof rendaMensalLocal !== 'undefined' && rendaMensalLocal != null) ? Number(rendaMensalLocal) : 0;
+          const saldoCalc = renda - totalPago;
+          if (saldoEl) saldoEl.textContent = formatBRL(saldoCalc);
+        } catch (e) {
+          console.warn('Não foi possível calcular saldo no modalDetalhes:', e);
+        }
+
+        if (atualizadoEl) atualizadoEl.textContent = 'Atualizado em ' + new Date().toLocaleString();
+      } catch (err) {
+        console.error('Erro ao popular modalDetalhes:', err);
+      }
+    });
+  })();
+
   // Função para persistir no backend
   async function persistSavedBackend(value) {
       try {
