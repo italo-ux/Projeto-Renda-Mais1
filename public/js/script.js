@@ -109,6 +109,29 @@
     const emailUsuarioEl = document.getElementById('emailUsuario') || document.getElementById('sidebar-email');
     if (emailUsuarioEl) emailUsuarioEl.innerHTML = emailUsuario;
 
+    // Atualiza status da meta mensal  se existir
+    try {
+      const metaMensal = sessaoData.metaMensal != null ? Number(sessaoData.metaMensal) : null;
+      const statusEl = document.getElementById('metaMensalStatus');
+      if (statusEl) {
+        if (metaMensal && metaMensal > 0) {
+          if ((Number(savedMoneyLocal) || 0) >= metaMensal) {
+            statusEl.textContent = 'Sua meta mensal foi depositada';
+            statusEl.classList.remove('text-danger');
+            statusEl.classList.add('text-success');
+          } else {
+            statusEl.textContent = `Meta mensal de ${formatBRL(metaMensal)} não foi depositada`;
+            statusEl.classList.remove('text-success');
+            statusEl.classList.add('text-danger');
+          }
+        } else {
+          statusEl.style.display = 'none';
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao atualizar status da meta mensal:', e);
+    }
+
       //  Primeira visita — fluxo mais robusto com logs
       try {
         const visitaResp = await fetch('/api/primeira-visita', { credentials: 'include' });

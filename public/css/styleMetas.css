@@ -256,6 +256,7 @@
   color: #444;
 }
 
+
 /* Mobile: navbar compacta e remover a palavra "Renda+" (mesma regra para página de metas) */
 @media (max-width: 768px) {
   .navbar { padding: 0.2rem 0.5rem; }
