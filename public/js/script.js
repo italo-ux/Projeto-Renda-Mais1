@@ -1040,6 +1040,28 @@
     }
   }
 
+  // Listener para o botão de logout (sidebar)
+  const btnLogout = document.getElementById('sidebar-logout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/logout', { 
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (resp.ok) {
+          window.location.href = 'login.html';
+        } else {
+          alert('Erro ao deslogar');
+        }
+      } catch (err) {
+        console.error('Erro ao fazer logout:', err);
+        alert('Erro ao deslogar');
+      }
+    });
+  }
+
   // Listener para o botão de salvar guardado
   const btnSalvarGuardado = document.getElementById('btnSalvarGuardado');
   if (btnSalvarGuardado) {
